@@ -5,7 +5,7 @@ const config = [
   ...nextCoreWebVitals,
   ...nextTypescript,
   {
-    files: ["*.config.js", "*.config.cjs"],
+    files: ["*.config.js", "*.config.cjs", "infra/scripts/**/*.js"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
     },
