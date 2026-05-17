@@ -1,6 +1,6 @@
-// Espelha o padrão do automanews (cliente por query, sem pool).
-// Cada `query()` abre uma conexão, executa e fecha — funciona bem com
-// ambientes serverless (Vercel + Neon) e mantém os testes simples.
+// Mirrors the automanews approach (client per query, no pool).
+// Every `query()` opens a connection, runs the statement and closes —
+// serverless-friendly with Vercel + Neon, and keeps tests trivial.
 import { Client } from "pg";
 import type { QueryResult, QueryResultRow } from "pg";
 import { ServiceError } from "infra/errors";

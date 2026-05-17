@@ -1,6 +1,6 @@
 const { exec } = require("node:child_process");
 
-console.log("\n⏳ Aguardando Postgres aceitar conexões...\n");
+console.log("\n⏳ Waiting for Postgres to accept connections...\n");
 check();
 
 function check() {
@@ -10,6 +10,6 @@ function check() {
       check();
       return;
     }
-    console.log("\n\n✅ Postgres pronto.\n");
+    console.log("\n\n✅ Postgres ready.\n");
   });
 }

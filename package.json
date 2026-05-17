@@ -2,7 +2,7 @@
   "name": "sacola",
   "version": "0.1.0",
   "private": true,
-  "description": "Gestão operacional para hortifruti com vendas via WhatsApp, separação distribuída e entrega.",
+  "description": "Open source operational management for greengrocers: WhatsApp-driven orders, distributed picking, and motorcycle delivery.",
   "license": "MIT",
   "author": "João Henrique Costa",
   "repository": {
