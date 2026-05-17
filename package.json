@@ -17,7 +17,8 @@
     "node": "24"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run services:up && npm run services:wait:db && npm run migrations:up && next dev",
+    "postdev": "npm run services:stop",
     "build": "next build",
     "start": "next start",
     "services:up": "docker compose -f infra/compose.yaml up -d",
