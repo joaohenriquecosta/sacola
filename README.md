@@ -1,5 +1,10 @@
 # Sacola
 
+[![Linting](https://github.com/joaohenriquecosta/sacola/actions/workflows/linting.yaml/badge.svg)](https://github.com/joaohenriquecosta/sacola/actions/workflows/linting.yaml)
+[![Tests](https://github.com/joaohenriquecosta/sacola/actions/workflows/tests.yaml/badge.svg)](https://github.com/joaohenriquecosta/sacola/actions/workflows/tests.yaml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Node](https://img.shields.io/badge/node-24-339933?logo=node.js&logoColor=white)](./.nvmrc)
+
 Gestão operacional para hortifruti — pedidos, separação e entrega.
 
 Open source, MIT. MVP em construção para um cliente real (3 vendedores, 3 separadores, 3 entregadores, ~50 pedidos/dia).
