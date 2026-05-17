@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sacola — Panorama do projeto</title>
+    <style>
+      /* ─── Tema (Taupe + Emerald) — espelha app/globals.css ──────────── */
+      :root {
+        --background: oklch(1 0 0);
+        --foreground: oklch(0.147 0.004 49.3);
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.147 0.004 49.3);
+        --muted: oklch(0.96 0.002 17.2);
+        --muted-foreground: oklch(0.547 0.021 43.1);
+        --primary: oklch(0.508 0.118 165.612); /* emerald */
+        --primary-foreground: oklch(0.979 0.021 166.113);
+        --accent: oklch(0.96 0.002 17.2);
+        --accent-foreground: oklch(0.214 0.009 43.1);
+        --border: oklch(0.922 0.005 34.3);
+        --ring: oklch(0.714 0.014 41.2);
+        --destructive: oklch(0.577 0.245 27.325);
+        --warn: oklch(0.7 0.16 70);
+        --radius: 0.45rem;
+        --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+      }
+      html.dark {
+        --background: oklch(0.147 0.004 49.3);
+        --foreground: oklch(0.986 0.002 67.8);
+        --card: oklch(0.214 0.009 43.1);
+        --card-foreground: oklch(0.986 0.002 67.8);
+        --muted: oklch(0.268 0.011 36.5);
+        --muted-foreground: oklch(0.714 0.014 41.2);
+        --primary: oklch(0.432 0.095 166.913);
+        --primary-foreground: oklch(0.979 0.021 166.113);
+        --accent: oklch(0.268 0.011 36.5);
+        --accent-foreground: oklch(0.986 0.002 67.8);
+        --border: oklch(1 0 0 / 10%);
+        --ring: oklch(0.547 0.021 43.1);
+        --destructive: oklch(0.704 0.191 22.216);
+        --warn: oklch(0.78 0.16 70);
+        --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+      }
+
+      /* ─── Base ─────────────────────────────────────────────────────── */
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--background);
+        color: var(--foreground);
+      }
+      body {
+        font-family:
+          ui-sans-serif,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          "DM Sans",
+          Roboto,
+          sans-serif;
+        line-height: 1.55;
+        font-size: 15px;
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+      a {
+        color: var(--primary);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 32px 24px 96px;
+      }
+
+      /* ─── Header com toggle ────────────────────────────────────────── */
+      header.top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 16px;
+        margin-bottom: 32px;
+        gap: 16px;
+      }
+      header.top h1 {
+        font-size: 26px;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+      header.top .meta {
+        font-size: 12px;
+        color: var(--muted-foreground);
+        margin-top: 2px;
+      }
+      .theme-btn {
+        background: var(--background);
+        color: var(--foreground);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 6px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .theme-btn:hover {
+        background: var(--muted);
+      }
+
+      /* ─── TOC ──────────────────────────────────────────────────────── */
+      nav.toc {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 32px;
+        box-shadow: var(--shadow-card);
+      }
+      nav.toc strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted-foreground);
+      }
+      nav.toc ol {
+        margin: 0;
+        padding-left: 20px;
+        columns: 2;
+        column-gap: 32px;
+      }
+      nav.toc a {
+        color: var(--foreground);
+      }
+      nav.toc a:hover {
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      /* ─── Sections ─────────────────────────────────────────────────── */
+      section {
+        background: var(--card);
+        color: var(--card-foreground);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: var(--shadow-card);
+      }
+      section h2 {
+        margin-top: 0;
+        font-size: 20px;
+        letter-spacing: -0.01em;
+      }
+      section h3 {
+        font-size: 16px;
+        margin-top: 24px;
+        margin-bottom: 8px;
+      }
+      p,
+      ul,
+      ol {
+        margin-block: 8px;
+      }
+      ul,
+      ol {
+        padding-left: 22px;
+      }
+
+      code,
+      kbd {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 13px;
+        background: var(--muted);
+        color: var(--foreground);
+        padding: 1px 6px;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--muted);
+        color: var(--foreground);
+        padding: 12px 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 13px;
+        line-height: 1.55;
+        border: 1px solid var(--border);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        color: var(--muted-foreground);
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .badge.ok {
+        background: color-mix(in oklch, var(--primary) 18%, transparent);
+        color: var(--primary);
+      }
+      .badge.todo {
+        background: color-mix(in oklch, var(--warn) 22%, transparent);
+        color: var(--warn);
+      }
+      .badge.future {
+        background: var(--muted);
+        color: var(--muted-foreground);
+      }
+      .badge.no {
+        background: color-mix(in oklch, var(--destructive) 16%, transparent);
+        color: var(--destructive);
+      }
+
+      .small {
+        font-size: 12px;
+        color: var(--muted-foreground);
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 24px 0;
+      }
+
+      /* ─── Wireframes ───────────────────────────────────────────────── */
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      @media (min-width: 720px) {
+        .grid2 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .wire {
+        background: color-mix(in oklch, var(--muted) 50%, transparent);
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .wire h4 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: var(--muted-foreground);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+      }
+      .phone {
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+        background: var(--card);
+        color: var(--card-foreground);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 14px;
+        min-height: 460px;
+      }
+      .phone .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        color: var(--muted-foreground);
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 12px;
+      }
+      .phone .row {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        font-size: 12px;
+      }
+      .phone .row .small {
+        color: var(--muted-foreground);
+        font-size: 11px;
+      }
+      .phone .btn {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        padding: 8px 12px;
+        border-radius: var(--radius);
+        text-align: center;
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 8px;
+      }
+      .phone .btn.alt {
+        background: var(--background);
+        color: var(--foreground);
+        border: 1px solid var(--border);
+      }
+      .phone .tag {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        background: color-mix(in oklch, var(--primary) 18%, transparent);
+        color: var(--primary);
+      }
+      .phone .tag.warn {
+        background: color-mix(in oklch, var(--warn) 22%, transparent);
+        color: var(--warn);
+      }
+      .phone .tag.ok {
+        background: color-mix(in oklch, var(--primary) 22%, transparent);
+        color: var(--primary);
+      }
+      .phone input,
+      .phone select {
+        width: 100%;
+        padding: 6px 8px;
+        font-family: inherit;
+        font-size: 12px;
+        background: var(--background);
+        color: var(--foreground);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        margin-bottom: 6px;
+      }
+      .phone label {
+        display: block;
+        font-size: 11px;
+        color: var(--muted-foreground);
+        margin-bottom: 2px;
+      }
+      .panel-info {
+        background: color-mix(in oklch, var(--primary) 10%, transparent);
+        border: 1px solid color-mix(in oklch, var(--primary) 30%, transparent);
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 11px;
+        margin-bottom: 8px;
+      }
+      .panel-saldo {
+        background: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 11px;
+        margin-bottom: 10px;
+      }
+      .panel-refresh {
+        margin-top: 12px;
+        padding: 6px 8px;
+        font-size: 11px;
+        border-radius: 6px;
+        background: color-mix(in oklch, var(--primary) 14%, transparent);
+        color: var(--primary);
+      }
+
+      footer {
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted-foreground);
+        margin-top: 32px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div>
+          <h1>🛒 Sacola — Panorama do projeto</h1>
+          <div class="meta">
+            Apanhado de decisões, modelo, cronograma e rascunho de telas. Documento vivo.
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Trocar tema">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel">Escuro</span>
+          </button>
+          <div class="meta">17/05/2026</div>
+        </div>
+      </header>
+
+      <nav class="toc">
+        <strong>Índice</strong>
+        <ol>
+          <li><a href="#contexto">O que é</a></li>
+          <li><a href="#stack">Stack técnica</a></li>
+          <li><a href="#decisoes">Decisões tomadas</a></li>
+          <li><a href="#estado">Estado atual do código</a></li>
+          <li><a href="#dados">Modelo de dados</a></li>
+          <li><a href="#cronograma">Cronograma 4 semanas</a></li>
+          <li><a href="#realtime">Eventos em tempo real</a></li>
+          <li><a href="#wireframes">Rascunho das telas</a></li>
+          <li><a href="#open-questions">Pendências</a></li>
+        </ol>
+      </nav>
+
+      <section id="contexto">
+        <h2>1. O que é</h2>
+        <p>
+          <strong>Sacola</strong> é um sistema operacional para hortifruti com pedidos via WhatsApp,
+          separação distribuída em mini-estoques e entrega por motoboys informais. MVP com cliente
+          real: 3 vendedores, 3 separadores, 3 entregadores, ~50 pedidos/dia.
+        </p>
+        <p>
+          <strong>Dor principal:</strong> hoje tudo passa por WhatsApp + planilha e dá muito
+          trabalho de conferir (pedido, separação, entrega, recebimento). O sistema mata a
+          redigitação e faz tudo "bater" — daí o nome.
+        </p>
+        <p><strong>Papéis:</strong></p>
+        <ul>
+          <li>
+            <strong>Gerente</strong> — cadastros, abastecimento, dashboard, confirmação de
+            pagamentos
+          </li>
+          <li>
+            <strong>Vendedor</strong> (3) — recebe pedido por WhatsApp, lança no Sacola, registra
+            pagamento
+          </li>
+          <li><strong>Separador</strong> (3) — vê fila, separa item a item pesando, finaliza</li>
+          <li>
+            <strong>Entregador</strong> (3) — vê fila de prontos, marca em rota / entregue / voltou
+          </li>
+        </ul>
+      </section>
+
+      <section id="stack">
+        <h2>2. Stack técnica</h2>
+        <table>
+          <tr>
+            <th>Camada</th>
+            <th>Escolha</th>
+            <th>Versão</th>
+          </tr>
+          <tr>
+            <td>Runtime</td>
+            <td>Node.js LTS</td>
+            <td>24</td>
+          </tr>
+          <tr>
+            <td>Framework</td>
+            <td>Next.js (App Router, sem <code>src/</code>)</td>
+            <td>16.2</td>
+          </tr>
+          <tr>
+            <td>UI lib</td>
+            <td>React + Tailwind CSS</td>
+            <td>19.2 / 4</td>
+          </tr>
+          <tr>
+            <td>Linguagem</td>
+            <td>TypeScript</td>
+            <td>5.7+</td>
+          </tr>
+          <tr>
+            <td>Componentes</td>
+            <td><strong>shadcn/ui</strong> (style Vega + Radix UI + hugeicons + DM Sans)</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Tema</td>
+            <td>
+              baseColor <strong>Taupe</strong> + accent <strong>Emerald</strong>, claro/escuro via
+              <code>next-themes</code>
+            </td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Banco</td>
+            <td>PostgreSQL (Neon em prod, Docker em dev)</td>
+            <td>16+</td>
+          </tr>
+          <tr>
+            <td>Acesso ao banco</td>
+            <td><code>pg</code> direto, <strong>sem ORM</strong>, SQL escrito à mão</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Migrations</td>
+            <td>
+              <code>node-pg-migrate</code>, <strong>forward-only</strong> (sem <code>.down</code>)
+            </td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Senha</td>
+            <td><code>bcryptjs</code> (12 chars min, com caractere especial)</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Sessão</td>
+            <td>DB-backed (token opaco em cookie httpOnly, <strong>6h</strong> com refresh)</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Testes</td>
+            <td>Jest + integration tests (TDD)</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Deploy</td>
+            <td>Vercel + Neon</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Repo referência</td>
+            <td><a href="https://github.com/joaohenriquecosta/automanews.com.br">automanews</a></td>
+            <td>—</td>
+          </tr>
+        </table>
+      </section>
+
+      <section id="decisoes">
+        <h2>3. Decisões tomadas</h2>
+        <table>
+          <tr>
+            <th>Tema</th>
+            <th>Decisão</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td>Pasta <code>src/</code></td>
+            <td>Não usar — arquivos na raiz</td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Roteamento</td>
+            <td>App Router</td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Migrations <code>.down</code></td>
+            <td>Nunca. Forward-only.</td>
+            <td><span class="badge ok">Regra</span></td>
+          </tr>
+          <tr>
+            <td>Senha — política</td>
+            <td>Mínimo 12 chars + caractere especial</td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Sessão</td>
+            <td>DB-backed (não JWT), <strong>lifetime 6 horas</strong>, refresh em uso</td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Cookie</td>
+            <td><code>sacola_session_id</code>, httpOnly, sameSite=lax, secure em prod</td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Criação de usuário</td>
+            <td>CLI local pro primeiro gerente, depois <code>POST /api/v1/usuarios</code> gated</td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Reset de senha</td>
+            <td>Gerente reseta, gera senha temporária, força troca no próximo login</td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Coluna <code>senha_temporaria</code></td>
+            <td>Adicionar à tabela <code>usuarios</code> quando criar migration</td>
+            <td><span class="badge todo">Aplicar</span></td>
+          </tr>
+          <tr>
+            <td>Autorização</td>
+            <td>
+              Feature-based (estilo automanews), com features
+              <strong>derivadas do <code>papel</code></strong>
+            </td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Rate limit no login</td>
+            <td>Fase 2</td>
+            <td><span class="badge future">Depois</span></td>
+          </tr>
+          <tr>
+            <td>Realtime</td>
+            <td>SSE + polling no servidor a cada 10s. Abstração <code>observarMudancas()</code></td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Coluna <code>atualizado_em</code></td>
+            <td>Em toda tabela observada (a começar por <code>pedidos</code>)</td>
+            <td><span class="badge todo">Aplicar</span></td>
+          </tr>
+          <tr>
+            <td>Saldo previsto do separador</td>
+            <td>
+              Em tempo real: estoque atual − reservado pra fila − este item. Avisa antes de
+              estourar.
+            </td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>UI primitives</td>
+            <td>
+              shadcn/ui copiados em <code>components/ui/</code>, não modularizar (CLI sobrescreve)
+            </td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Components de domínio</td>
+            <td>
+              Em <code>components/&lt;dominio&gt;/</code>; quebrar em sub-arquivos só se passar de
+              ~300 linhas
+            </td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Pasta <code>lib/</code></td>
+            <td>Manter (convenção shadcn). Helpers FRONT (cn, format, api fetcher)</td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td>Tema dark/light</td>
+            <td>
+              Toggle global via <code>next-themes</code>; padrão segue
+              <code>prefers-color-scheme</code>
+            </td>
+            <td><span class="badge ok">Decidido</span></td>
+          </tr>
+          <tr>
+            <td><code>pg_cron</code></td>
+            <td>Só se necessidade aparecer (limpeza sessões, snapshots)</td>
+            <td><span class="badge future">Depois</span></td>
+          </tr>
+          <tr>
+            <td><code>LISTEN/NOTIFY</code> puro</td>
+            <td>Só se 10s de polling virar gargalo</td>
+            <td><span class="badge future">Depois</span></td>
+          </tr>
+          <tr>
+            <td>Mailer / signup público</td>
+            <td>Não tem. Gerente cadastra todos.</td>
+            <td><span class="badge no">Fora</span></td>
+          </tr>
+          <tr>
+            <td>Conciliação automática de extrato</td>
+            <td>Gerente confirma manual</td>
+            <td><span class="badge no">Fora MVP</span></td>
+          </tr>
+          <tr>
+            <td>Integração WhatsApp</td>
+            <td>Vendedor manda zap manual</td>
+            <td><span class="badge no">Fora MVP</span></td>
+          </tr>
+          <tr>
+            <td>App nativo</td>
+            <td>Não. Web responsivo.</td>
+            <td><span class="badge no">Fora MVP</span></td>
+          </tr>
+        </table>
+      </section>
+
+      <section id="estado">
+        <h2>4. Estado atual do código</h2>
+        <p>
+          Repositório em <code>/Users/palinha/dev/sacola</code>. Roda com
+          <code>npm install &amp;&amp; npm run dev</code>. Branch <code>main</code>, sem commit
+          ainda.
+        </p>
+        <pre>
+sacola/
+├── SETUP.md            especificação do produto
+├── README.md           quick start
+├── LICENSE             MIT
+├── panorama.html       este arquivo
+├── temas.html          preview de paletas shadcn
+├── package.json        Next 16.2, React 19.2, Tailwind 4, shadcn, next-themes
+├── tsconfig.json       baseUrl=".", paths {"@/*":["./*"]}, strict
+├── components.json     config shadcn (style radix-vega, baseColor taupe, icons hugeicons)
+├── next.config.ts      reactStrictMode, poweredByHeader=false
+├── eslint.config.mjs, postcss.config.mjs
+├── .editorconfig, .gitignore, .nvmrc, .prettierrc
+├── app/
+│   ├── layout.tsx      pt-BR + DM Sans + ThemeProvider
+│   ├── page.tsx        landing com header + ThemeToggle + Button shadcn
+│   └── globals.css     @import tailwindcss + shadcn theme tokens (OKLCH)
+├── components/
+│   ├── theme-provider.tsx    wrapper next-themes "use client"
+│   ├── theme-toggle.tsx      dropdown Claro/Escuro/Sistema com hugeicons
+│   └── ui/
+│       ├── button.tsx        shadcn Button (Radix Slot, 6 variants, 8 sizes)
+│       └── dropdown-menu.tsx shadcn DropdownMenu
+└── lib/
+    └── utils.ts        cn() = clsx + tailwind-merge</pre
+        >
+        <p class="small">
+          Próximas peças (<code>infra/</code>, <code>models/</code>, primeira migration, endpoints,
+          testes) entram <strong>uma por vez</strong>, no padrão do automanews, com commits
+          atômicos.
+        </p>
+      </section>
+
+      <section id="dados">
+        <h2>5. Modelo de dados (referência)</h2>
+        <p class="small">
+          Snapshot resumido. Spec completa em <code>SETUP.md §5</code>. Migrations vão entrar uma
+          por uma com calma.
+        </p>
+        <table>
+          <tr>
+            <th>Tabela</th>
+            <th>Função</th>
+            <th>Notas</th>
+          </tr>
+          <tr>
+            <td><code>usuarios</code></td>
+            <td>Login + papel</td>
+            <td>
+              Papéis: gerente/vendedor/separador/entregador. <code>senha_hash</code>,
+              <code>ativo</code>, <code>senha_temporaria</code> (a adicionar).
+            </td>
+          </tr>
+          <tr>
+            <td><code>clientes</code></td>
+            <td>Cadastro de cliente final</td>
+            <td><code>limite_fiado_centavos</code>, <code>iniciais</code> (futura tag).</td>
+          </tr>
+          <tr>
+            <td><code>produtos</code></td>
+            <td>Catálogo global</td>
+            <td><code>unidade</code> = kg ou un. <code>preco_centavos</code>.</td>
+          </tr>
+          <tr>
+            <td><code>separadores_produtos</code></td>
+            <td>Catálogo de cada separador (N:N)</td>
+            <td>Quem atende o quê.</td>
+          </tr>
+          <tr>
+            <td><code>movimentacoes_estoque</code></td>
+            <td>Ledger do estoque</td>
+            <td>
+              Saldo = SUM(gramas). Tipos: abastecimento, saida_pedido, ajuste_contagem, perda,
+              estorno_cancelamento.
+            </td>
+          </tr>
+          <tr>
+            <td><code>pedidos</code></td>
+            <td>Pedido + status</td>
+            <td>
+              Status: novo, em_separacao, separado, em_entrega, entregue, cancelado.
+              <code>codigo</code> humano, <code>tag_entrega</code>,
+              <code>atualizado_em</code> (realtime).
+            </td>
+          </tr>
+          <tr>
+            <td><code>pedido_itens</code></td>
+            <td>Itens do pedido</td>
+            <td><code>gramas_cotado</code> vs <code>gramas_separado</code>. Snapshot de preço.</td>
+          </tr>
+          <tr>
+            <td><code>pagamentos</code></td>
+            <td>Pagamentos do pedido</td>
+            <td>Forma: pix/dinheiro/fiado. <code>confirmado</code> pelo gerente.</td>
+          </tr>
+          <tr>
+            <td><code>sessoes</code></td>
+            <td>Sessões DB-backed</td>
+            <td>Token opaco, <code>expira_em</code> (6h).</td>
+          </tr>
+          <tr>
+            <td><code>logs_acao</code></td>
+            <td>Auditoria</td>
+            <td>Quem fez o quê, com <code>detalhes jsonb</code>.</td>
+          </tr>
+        </table>
+      </section>
+
+      <section id="cronograma">
+        <h2>6. Cronograma — 4 semanas</h2>
+        <table>
+          <tr>
+            <th>Semana</th>
+            <th>Entrega</th>
+            <th>O que faz</th>
+          </tr>
+          <tr>
+            <td><strong>1</strong></td>
+            <td>Fundação + Auth</td>
+            <td>
+              <code>POST /api/v1/sessions</code> funcionando; CI verde; CLI cria primeiro gerente.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>2</strong></td>
+            <td>Cadastros + Estoque</td>
+            <td>
+              Gerente cadastra produtos, vincula a separador, lança abastecimento, lê saldo — tudo
+              via API.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>3</strong></td>
+            <td>Pedido (core)</td>
+            <td>
+              Vendedor cria → separador finaliza → estoque baixa → cancelamento devolve. Transações
+              atômicas.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>4</strong></td>
+            <td>Pagamento + Frontend + Deploy</td>
+            <td>
+              API de pagamento; frontend mobile-first usando shadcn; deploy Vercel+Neon; cliente
+              real usando.
+            </td>
+          </tr>
+        </table>
+      </section>
+
+      <section id="realtime">
+        <h2>7. Eventos em tempo real (decisão)</h2>
+        <p><strong>SSE (Server-Sent Events) + polling no servidor a cada 10 segundos.</strong></p>
+        <ol>
+          <li>
+            Tabela <code>pedidos</code> ganha <code>atualizado_em timestamptz</code> com trigger que
+            reescreve a cada <code>UPDATE</code>.
+          </li>
+          <li>
+            Função <code>observarMudancas({desde})</code> em <code>models/pedido.ts</code> é um
+            <em>async generator</em>: roda
+            <code>SELECT pedidos WHERE atualizado_em &gt; $desde</code> a cada 10s e emite os novos.
+          </li>
+          <li>
+            Rota <code>app/api/v1/eventos/pedidos/route.ts</code> consome o gerador e empurra pra
+            cliente via <code>text/event-stream</code>.
+          </li>
+          <li>
+            Cliente usa <code>new EventSource("/api/v1/eventos/pedidos")</code>. Reconnect é nativo
+            do browser.
+          </li>
+        </ol>
+        <p class="small">
+          <strong>Por quê SSE e não WebSocket:</strong> SSE é HTTP puro, unidirecional (que basta —
+          o cliente fala pelo POST/PATCH normais), funciona em qualquer Vercel Function, reconnect
+          automático. WebSocket seria overkill aqui.
+        </p>
+        <p class="small">
+          <strong>Por quê polling e não <code>LISTEN/NOTIFY</code> puro:</strong> 10s de delay é
+          invisível pro fluxo (separação leva minutos). E a abstração
+          <code>observarMudancas()</code> deixa trocar pra <code>LISTEN/NOTIFY</code> depois sem
+          mexer em mais nada.
+        </p>
+      </section>
+
+      <section id="wireframes">
+        <h2>8. Rascunho das telas (modelo mental)</h2>
+        <p class="small">
+          Wireframes só pra você visualizar. Nada disso é design final — é rascunho total mesmo. As
+          cores acompanham o tema que você escolheu no toggle acima.
+        </p>
+
+        <div class="grid2">
+          <div class="wire">
+            <h4>Login (todos os papéis)</h4>
+            <div class="phone">
+              <div class="top-bar"><span>9:41</span><span>📶</span></div>
+              <div style="text-align: center; margin: 24px 0">
+                <div style="font-size: 24px; font-weight: 600">🛒 Sacola</div>
+              </div>
+              <label>Login</label>
+              <input value="gerente" readonly />
+              <label>Senha</label>
+              <input type="password" value="••••••" readonly />
+              <div class="btn">Entrar</div>
+            </div>
+          </div>
+
+          <div class="wire">
+            <h4>Vendedor — Dashboard</h4>
+            <div class="phone">
+              <div class="top-bar"><span>Maria · Vendedora</span><span>Sair</span></div>
+              <div style="font-weight: 600; margin-bottom: 8px">Hoje</div>
+              <div class="row">
+                <div>P-2026-0042 · Maria S.</div>
+                <div class="small">3 itens · <span class="tag warn">aguarda pagto</span></div>
+              </div>
+              <div class="row">
+                <div>P-2026-0041 · João S.</div>
+                <div class="small">5 itens · <span class="tag ok">pago pix</span></div>
+              </div>
+              <div class="row">
+                <div>P-2026-0039 · Cláudio</div>
+                <div class="small">2 itens · <span class="tag">fiado R$ 18,90</span></div>
+              </div>
+              <div class="btn" style="margin-top: 16px">+ Novo pedido</div>
+            </div>
+          </div>
+
+          <div class="wire">
+            <h4>Vendedor — Novo pedido</h4>
+            <div class="phone">
+              <div class="top-bar"><span>← Voltar</span><span></span></div>
+              <label>Cliente</label>
+              <input value="Maria Silva" readonly />
+              <label>Separador</label>
+              <select>
+                <option>Pedro (banca A)</option>
+              </select>
+              <label>Itens</label>
+              <div class="row"><div>Tomate · 2 kg · R$ 25,80</div></div>
+              <div class="row"><div>Alface · 1 un · R$ 4,50</div></div>
+              <div class="btn alt" style="margin-bottom: 8px">+ Adicionar item</div>
+              <div style="text-align: right; font-weight: 600; margin: 8px 0">Total: R$ 30,30</div>
+              <div class="btn">Lançar pedido</div>
+            </div>
+          </div>
+
+          <div class="wire">
+            <h4>Separador — Fila (realtime)</h4>
+            <div class="phone">
+              <div class="top-bar"><span>Pedro · Separador</span><span>Sair</span></div>
+              <div style="font-weight: 600; margin-bottom: 6px">Estoque previsto após fila</div>
+              <div class="panel-saldo">
+                Tomate: <strong>42,05 kg</strong><br />
+                Alface: <strong>3 un</strong> <span class="tag warn">baixo</span><br />
+                Cebola: <strong>18,00 kg</strong>
+              </div>
+              <div style="font-weight: 600; margin-bottom: 6px">Minha fila</div>
+              <div class="row">
+                <div>P-2026-0042 · Maria S.</div>
+                <div class="small">3 itens · <span class="tag warn">novo</span></div>
+              </div>
+              <div class="row">
+                <div>P-2026-0040 · Lúcia</div>
+                <div class="small">4 itens · <span class="tag">em separação</span></div>
+              </div>
+              <div class="btn alt" style="margin-top: 12px">Começar próximo</div>
+              <div class="panel-refresh">↻ Atualizando a cada 10s</div>
+            </div>
+          </div>
+
+          <div class="wire">
+            <h4>Separador — Pesando item</h4>
+            <div class="phone">
+              <div class="top-bar"><span>← P-2026-0040</span><span></span></div>
+              <div style="font-weight: 600; margin-bottom: 4px">Tomate</div>
+              <div class="small" style="margin-bottom: 8px">cotado: 2,000 kg · R$ 12,90/kg</div>
+
+              <div class="panel-info">
+                Estoque agora: <strong>48,05 kg</strong><br />
+                Após este item: <strong>46,05 kg</strong><br />
+                Reservado p/ resto da fila: <strong>4,00 kg</strong><br />
+                <strong>Sobra prevista: 42,05 kg ✓</strong>
+              </div>
+
+              <label>Peso real (kg)</label>
+              <input value="1,950" readonly />
+              <div class="btn">✓ Pesado</div>
+              <div class="btn alt" style="margin-top: 6px">✗ Faltou estoque</div>
+              <hr />
+              <div class="small">Próximo: Alface · 1 un</div>
+            </div>
+          </div>
+
+          <div class="wire">
+            <h4>Entregador — Fila pronta</h4>
+            <div class="phone">
+              <div class="top-bar"><span>Carlos · Entregador</span><span>Sair</span></div>
+              <div style="font-weight: 600; margin-bottom: 8px">Pedidos prontos</div>
+              <div class="row">
+                <div><span class="tag">MS-1</span> Rua das Flores, 123</div>
+                <div class="small">R$ 30,30 · pix pago</div>
+              </div>
+              <div class="row">
+                <div><span class="tag">JS-2</span> Av. Brasil, 456</div>
+                <div class="small">R$ 18,90 · receber fiado</div>
+              </div>
+              <div class="btn">Sair com 2 pedidos</div>
+              <div class="panel-refresh">↻ Atualizando a cada 10s</div>
+            </div>
+          </div>
+
+          <div class="wire">
+            <h4>Admin — Pedidos do dia</h4>
+            <div class="phone">
+              <div class="top-bar"><span>Gerente</span><span>Sair</span></div>
+              <div style="font-weight: 600; margin-bottom: 8px">17/05 · 47 pedidos</div>
+              <div class="row"><div>P-0042 · entregue · R$ 30,30</div></div>
+              <div class="row"><div>P-0041 · em entrega · R$ 18,90</div></div>
+              <div class="row"><div>P-0040 · separando · R$ 56,10</div></div>
+              <hr />
+              <div class="small">Faturado hoje: R$ 1.842,30</div>
+              <div class="small">Em fiado: R$ 234,80</div>
+              <div class="small">Aguarda confirmação: 4 pix</div>
+            </div>
+          </div>
+
+          <div class="wire">
+            <h4>Admin — Cadastrar usuário</h4>
+            <div class="phone">
+              <div class="top-bar"><span>← Voltar</span><span></span></div>
+              <div style="font-weight: 600; margin-bottom: 8px">Novo usuário</div>
+              <label>Nome</label>
+              <input value="Pedro Silva" readonly />
+              <label>Login</label>
+              <input value="pedro" readonly />
+              <label>Papel</label>
+              <select>
+                <option>separador</option>
+              </select>
+              <label>Senha temporária (gerada)</label>
+              <input value="Px9$kL2#mQ8a" readonly />
+              <div class="small" style="margin: 4px 0 8px">Anote agora — não mostro de novo.</div>
+              <div class="btn">Criar usuário</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="open-questions">
+        <h2>9. Pendências / decisões abertas</h2>
+        <ul>
+          <li>
+            <strong>Formato exato da <code>tag_entrega</code></strong> — sugestão atual:
+            <code>iniciais-N</code> (ex: <code>MS-1</code>). Confirmar com cliente.
+          </li>
+          <li>
+            <strong>Política de logs em <code>logs_acao</code></strong> — registrar: login, criação
+            de usuário, troca de senha, criar/cancelar pedido, ajustes de estoque, confirmar
+            pagamento. Falta decidir granularidade.
+          </li>
+          <li>
+            <strong>Limite do alerta de saldo baixo</strong> — sugestão MVP: ≤ 10% do estoque ou ≤ 1
+            unidade. A confirmar em uso real.
+          </li>
+          <li><strong>Primeiro deploy</strong> — Vercel + Neon. Conta Neon: pendente criar.</li>
+          <li>
+            <strong>Próximo passo de código</strong> — escolher entre: (a) git commit do estado
+            atual, (b) Husky+commitlint+CI, (c) Jest setup, (d) primeira migration.
+          </li>
+        </ul>
+      </section>
+
+      <footer>
+        Sacola · Documento vivo · Próxima atualização a cada decisão arquitetural significativa.
+      </footer>
+    </div>
+
+    <script>
+      function applyTheme(mode) {
+        document.documentElement.classList.toggle("dark", mode === "dark");
+        document.getElementById("themeIcon").textContent = mode === "dark" ? "☀️" : "🌙";
+        document.getElementById("themeLabel").textContent = mode === "dark" ? "Claro" : "Escuro";
+      }
+      function currentMode() {
+        return document.documentElement.classList.contains("dark") ? "dark" : "light";
+      }
+      function toggleTheme() {
+        const next = currentMode() === "dark" ? "light" : "dark";
+        localStorage.setItem("sacola-panorama-theme", next);
+        applyTheme(next);
+      }
+      // Inicializa: localStorage > prefers-color-scheme > light
+      (function () {
+        const saved = localStorage.getItem("sacola-panorama-theme");
+        if (saved === "dark" || saved === "light") {
+          applyTheme(saved);
+        } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          applyTheme("dark");
+        } else {
+          applyTheme("light");
+        }
+      })();
+    </script>
+  </body>
+</html>
