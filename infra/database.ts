@@ -3,6 +3,7 @@
 // ambientes serverless (Vercel + Neon) e mantém os testes simples.
 import { Client } from "pg";
 import type { QueryResult, QueryResultRow } from "pg";
+import { ServiceError } from "infra/errors";
 
 type QueryInput = string | { text: string; values?: unknown[] };
 
@@ -14,8 +15,12 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   try {
     client = await getNewClient();
   } catch (error) {
-    console.error("Erro na conexão com o Banco de Dados:", error);
-    throw error;
+    const publicError = new ServiceError({
+      cause: error,
+      message: "Erro na conexão com o Banco de Dados.",
+    });
+    console.error(publicError);
+    throw publicError;
   }
 
   try {
@@ -25,8 +30,12 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
         : await client.query<T>(queryObject.text, queryObject.values as never);
     return result;
   } catch (error) {
-    console.error("Erro na Query ao Banco de Dados:", error);
-    throw error;
+    const publicError = new ServiceError({
+      cause: error,
+      message: "Erro na Query ao Banco de Dados.",
+    });
+    console.error(publicError);
+    throw publicError;
   } finally {
     await client?.end();
   }
