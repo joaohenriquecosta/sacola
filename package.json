@@ -24,6 +24,9 @@
     "services:stop": "docker compose -f infra/compose.yaml stop",
     "services:down": "docker compose -f infra/compose.yaml down",
     "services:wait:db": "node infra/scripts/wait-for-postgres.js",
+    "migrations:create": "node-pg-migrate -m infra/migrations create",
+    "migrations:up": "node-pg-migrate --envPath .env.development -m infra/migrations up",
+    "migrations:up:dry": "node-pg-migrate --envPath .env.development -m infra/migrations --dry-run up",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -62,6 +65,7 @@
     "husky": "^9.1.7",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
+    "node-pg-migrate": "^8.0.4",
     "prettier": "^3.4.2",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.3"
