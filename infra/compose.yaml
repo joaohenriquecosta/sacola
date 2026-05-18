@@ -1,0 +1,26 @@
+# =============================================================================
+# Sacola — local Postgres
+#
+# Commands (from project root):
+#   npm run services:up      Start Postgres in the background
+#   npm run services:stop    Stop the container (data persists)
+#   npm run services:down    Remove the container and network (data persists in volume)
+#   npm run services:wait:db Wait until Postgres accepts connections
+#
+# Inspect:
+#   docker ps                            list running containers
+#   docker logs sacola_postgres          tail database logs
+# =============================================================================
+services:
+  database:
+    container_name: sacola_postgres
+    image: "postgres:16.6-alpine"
+    env_file:
+      - ../.env.development
+    ports:
+      - "5432:5432"
+    volumes:
+      - sacola_pgdata:/var/lib/postgresql/data
+
+volumes:
+  sacola_pgdata:

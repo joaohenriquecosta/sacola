@@ -583,7 +583,7 @@
           </tr>
           <tr>
             <td>Criação de usuário</td>
-            <td>CLI local pro primeiro gerente, depois <code>POST /api/v1/usuarios</code> gated</td>
+            <td>CLI local pro primeiro gerente, depois <code>POST /api/v1/users</code> gated</td>
             <td><span class="badge ok">Decidido</span></td>
           </tr>
           <tr>
@@ -592,8 +592,8 @@
             <td><span class="badge ok">Decidido</span></td>
           </tr>
           <tr>
-            <td>Coluna <code>senha_temporaria</code></td>
-            <td>Adicionar à tabela <code>usuarios</code> quando criar migration</td>
+            <td>Coluna <code>temporary_password</code></td>
+            <td>Adicionar à tabela <code>users</code> quando criar migration</td>
             <td><span class="badge todo">Aplicar</span></td>
           </tr>
           <tr>
@@ -611,12 +611,12 @@
           </tr>
           <tr>
             <td>Realtime</td>
-            <td>SSE + polling no servidor a cada 10s. Abstração <code>observarMudancas()</code></td>
+            <td>SSE + polling no servidor a cada 10s. Abstração <code>watchChanges()</code></td>
             <td><span class="badge ok">Decidido</span></td>
           </tr>
           <tr>
-            <td>Coluna <code>atualizado_em</code></td>
-            <td>Em toda tabela observada (a começar por <code>pedidos</code>)</td>
+            <td>Coluna <code>updated_at</code></td>
+            <td>Em toda tabela observada (a começar por <code>orders</code>)</td>
             <td><span class="badge todo">Aplicar</span></td>
           </tr>
           <tr>
@@ -741,64 +741,64 @@ sacola/
             <th>Notas</th>
           </tr>
           <tr>
-            <td><code>usuarios</code></td>
+            <td><code>users</code></td>
             <td>Login + papel</td>
             <td>
-              Papéis: gerente/vendedor/separador/entregador. <code>senha_hash</code>,
-              <code>ativo</code>, <code>senha_temporaria</code> (a adicionar).
+              <code>role</code> ∈ {manager, seller, picker, courier}. <code>password_hash</code>,
+              <code>active</code>, <code>temporary_password</code> (a adicionar).
             </td>
           </tr>
           <tr>
-            <td><code>clientes</code></td>
+            <td><code>clients</code></td>
             <td>Cadastro de cliente final</td>
-            <td><code>limite_fiado_centavos</code>, <code>iniciais</code> (futura tag).</td>
+            <td><code>credit_limit_cents</code> ("fiado"), <code>initials</code> (futura tag).</td>
           </tr>
           <tr>
-            <td><code>produtos</code></td>
+            <td><code>products</code></td>
             <td>Catálogo global</td>
-            <td><code>unidade</code> = kg ou un. <code>preco_centavos</code>.</td>
+            <td><code>unit</code> ∈ {kg, un}. <code>price_cents</code>.</td>
           </tr>
           <tr>
-            <td><code>separadores_produtos</code></td>
+            <td><code>picker_products</code></td>
             <td>Catálogo de cada separador (N:N)</td>
             <td>Quem atende o quê.</td>
           </tr>
           <tr>
-            <td><code>movimentacoes_estoque</code></td>
+            <td><code>stock_movements</code></td>
             <td>Ledger do estoque</td>
             <td>
-              Saldo = SUM(gramas). Tipos: abastecimento, saida_pedido, ajuste_contagem, perda,
-              estorno_cancelamento.
+              Saldo = SUM(grams). <code>type</code> ∈ {restock, order_pick, count_adjustment, loss,
+              cancellation_reversal}.
             </td>
           </tr>
           <tr>
-            <td><code>pedidos</code></td>
+            <td><code>orders</code></td>
             <td>Pedido + status</td>
             <td>
-              Status: novo, em_separacao, separado, em_entrega, entregue, cancelado.
-              <code>codigo</code> humano, <code>tag_entrega</code>,
-              <code>atualizado_em</code> (realtime).
+              <code>status</code> ∈ {new, picking, picked, delivering, delivered, canceled}.
+              <code>code</code> humano, <code>delivery_tag</code>,
+              <code>updated_at</code> (realtime).
             </td>
           </tr>
           <tr>
-            <td><code>pedido_itens</code></td>
+            <td><code>order_items</code></td>
             <td>Itens do pedido</td>
-            <td><code>gramas_cotado</code> vs <code>gramas_separado</code>. Snapshot de preço.</td>
+            <td><code>quoted_grams</code> vs <code>picked_grams</code>. Snapshot de preço.</td>
           </tr>
           <tr>
-            <td><code>pagamentos</code></td>
+            <td><code>payments</code></td>
             <td>Pagamentos do pedido</td>
-            <td>Forma: pix/dinheiro/fiado. <code>confirmado</code> pelo gerente.</td>
+            <td><code>method</code> ∈ {pix, cash, tab}. <code>confirmed</code> pelo gerente.</td>
           </tr>
           <tr>
-            <td><code>sessoes</code></td>
+            <td><code>sessions</code></td>
             <td>Sessões DB-backed</td>
-            <td>Token opaco, <code>expira_em</code> (6h).</td>
+            <td>Token opaco, <code>expires_at</code> (6h).</td>
           </tr>
           <tr>
-            <td><code>logs_acao</code></td>
+            <td><code>action_logs</code></td>
             <td>Auditoria</td>
-            <td>Quem fez o quê, com <code>detalhes jsonb</code>.</td>
+            <td>Quem fez o quê, com <code>details jsonb</code>.</td>
           </tr>
         </table>
       </section>
@@ -850,21 +850,21 @@ sacola/
         <p><strong>SSE (Server-Sent Events) + polling no servidor a cada 10 segundos.</strong></p>
         <ol>
           <li>
-            Tabela <code>pedidos</code> ganha <code>atualizado_em timestamptz</code> com trigger que
+            Tabela <code>orders</code> ganha <code>updated_at timestamptz</code> com trigger que
             reescreve a cada <code>UPDATE</code>.
           </li>
           <li>
-            Função <code>observarMudancas({desde})</code> em <code>models/pedido.ts</code> é um
-            <em>async generator</em>: roda
-            <code>SELECT pedidos WHERE atualizado_em &gt; $desde</code> a cada 10s e emite os novos.
+            Função <code>watchChanges({since})</code> em <code>models/order.ts</code> é um
+            <em>async generator</em>: roda <code>SELECT orders WHERE updated_at &gt; $since</code> a
+            cada 10s e emite os novos.
           </li>
           <li>
-            Rota <code>app/api/v1/eventos/pedidos/route.ts</code> consome o gerador e empurra pra
+            Rota <code>app/api/v1/events/orders/route.ts</code> consome o gerador e empurra pra
             cliente via <code>text/event-stream</code>.
           </li>
           <li>
-            Cliente usa <code>new EventSource("/api/v1/eventos/pedidos")</code>. Reconnect é nativo
-            do browser.
+            Cliente usa <code>new EventSource("/api/v1/events/orders")</code>. Reconnect é nativo do
+            browser.
           </li>
         </ol>
         <p class="small">
@@ -875,8 +875,8 @@ sacola/
         <p class="small">
           <strong>Por quê polling e não <code>LISTEN/NOTIFY</code> puro:</strong> 10s de delay é
           invisível pro fluxo (separação leva minutos). E a abstração
-          <code>observarMudancas()</code> deixa trocar pra <code>LISTEN/NOTIFY</code> depois sem
-          mexer em mais nada.
+          <code>watchChanges()</code> deixa trocar pra <code>LISTEN/NOTIFY</code> depois sem mexer
+          em mais nada.
         </p>
       </section>
 
@@ -1049,12 +1049,12 @@ sacola/
         <h2>9. Pendências / decisões abertas</h2>
         <ul>
           <li>
-            <strong>Formato exato da <code>tag_entrega</code></strong> — sugestão atual:
+            <strong>Formato exato da <code>delivery_tag</code></strong> — sugestão atual:
             <code>iniciais-N</code> (ex: <code>MS-1</code>). Confirmar com cliente.
           </li>
           <li>
-            <strong>Política de logs em <code>logs_acao</code></strong> — registrar: login, criação
-            de usuário, troca de senha, criar/cancelar pedido, ajustes de estoque, confirmar
+            <strong>Política de logs em <code>action_logs</code></strong> — registrar: login,
+            criação de usuário, troca de senha, criar/cancelar pedido, ajustes de estoque, confirmar
             pagamento. Falta decidir granularidade.
           </li>
           <li>

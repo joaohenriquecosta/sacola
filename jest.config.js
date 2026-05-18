@@ -1,5 +1,5 @@
-// Espelha o padrão do automanews (next/jest + maxWorkers 1).
-// Sem advisory lock por ora — entra junto com a primeira migration / Postgres.
+// Mirrors the automanews setup (next/jest + maxWorkers 1).
+// No advisory lock yet — that lands with the first migration / Postgres.
 const nextJest = require("next/jest");
 
 const createJestConfig = nextJest({
