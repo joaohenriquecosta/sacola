@@ -50,9 +50,7 @@ function runNpmScript(scriptName) {
   });
 
   if (result.status !== 0) {
-    throw new Error(
-      `Command npm run ${scriptName} exited with code ${result.status}.`,
-    );
+    throw new Error(`Command npm run ${scriptName} exited with code ${result.status}.`);
   }
 }
 

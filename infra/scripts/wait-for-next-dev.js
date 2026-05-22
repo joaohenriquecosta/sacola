@@ -24,8 +24,7 @@ async function assertNextApiReady() {
 
   const migrationsRes = await fetch(`${baseUrl}/api/v1/migrations`);
   const migrationsOk =
-    isJsonResponse(migrationsRes) &&
-    (migrationsRes.status === 200 || migrationsRes.status === 403);
+    isJsonResponse(migrationsRes) && (migrationsRes.status === 200 || migrationsRes.status === 403);
   if (!migrationsOk) {
     throw new Error(
       `migrations: want 200/403+json, got ${migrationsRes.status} content-type=${migrationsRes.headers.get("content-type")}`,

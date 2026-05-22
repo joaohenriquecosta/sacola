@@ -1,4 +1,9 @@
-import { clearDatabase, runPendingMigrations, testBaseUrl, waitForAllServices } from "tests/orchestrator";
+import {
+  clearDatabase,
+  runPendingMigrations,
+  testBaseUrl,
+  waitForAllServices,
+} from "tests/orchestrator";
 
 const expectedDbVersion = process.env.POSTGRES_VERSION;
 const expectedMaxConnections = parseInt(process.env.POSTGRES_MAX_CONNECTIONS ?? "0");

@@ -3,12 +3,7 @@ const { execFileSync, spawn, spawnSync } = require("node:child_process");
 const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..", "..");
-const runnerPath = path.join(
-  projectRoot,
-  "infra",
-  "scripts",
-  "run-next-watch-server.js",
-);
+const runnerPath = path.join(projectRoot, "infra", "scripts", "run-next-watch-server.js");
 
 switch (process.platform) {
   case "darwin":
@@ -69,11 +64,9 @@ function openOnWindows() {
     return;
   }
 
-  spawnSync(
-    "cmd.exe",
-    ["/c", "start", "Next.js Watch Server", "cmd.exe", "/k", command],
-    { stdio: "inherit" },
-  );
+  spawnSync("cmd.exe", ["/c", "start", "Next.js Watch Server", "cmd.exe", "/k", command], {
+    stdio: "inherit",
+  });
 }
 
 function openOnLinux() {

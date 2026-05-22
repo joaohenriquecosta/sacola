@@ -1,4 +1,9 @@
-import { clearDatabase, runPendingMigrations, testBaseUrl, waitForAllServices } from "tests/orchestrator";
+import {
+  clearDatabase,
+  runPendingMigrations,
+  testBaseUrl,
+  waitForAllServices,
+} from "tests/orchestrator";
 
 beforeAll(async () => {
   await waitForAllServices();
