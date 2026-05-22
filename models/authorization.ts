@@ -50,11 +50,11 @@ export function isAuthorized(
   return user.features.includes(feature);
 }
 
-export function filterOutput<T extends Record<string, unknown>>(
+export function filterOutput(
   user: AuthorizedUser,
   feature: string,
-  resource: T,
-): Partial<T> | T {
+  resource: Record<string, unknown>,
+): Record<string, unknown> {
   validateUser(user);
   validateFeature(feature);
   validateResource(resource);
@@ -66,7 +66,7 @@ export function filterOutput<T extends Record<string, unknown>>(
       features: resource.features,
       created_at: resource.created_at,
       updated_at: resource.updated_at,
-    } as Partial<T>;
+    };
   }
 
   if (feature === "read:user:self") {
@@ -78,9 +78,9 @@ export function filterOutput<T extends Record<string, unknown>>(
         features: resource.features,
         created_at: resource.created_at,
         updated_at: resource.updated_at,
-      } as Partial<T>;
+      };
     }
-    return {} as Partial<T>;
+    return {};
   }
 
   if (feature === "read:session") {
@@ -92,9 +92,9 @@ export function filterOutput<T extends Record<string, unknown>>(
         expires_at: resource.expires_at,
         created_at: resource.created_at,
         updated_at: resource.updated_at,
-      } as Partial<T>;
+      };
     }
-    return {} as Partial<T>;
+    return {};
   }
 
   return resource;
