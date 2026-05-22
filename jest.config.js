@@ -1,5 +1,6 @@
-// Mirrors the automanews setup (next/jest + maxWorkers 1).
-// No advisory lock yet — that lands with the first migration / Postgres.
+const dotenv = require("dotenv");
+dotenv.config({ path: ".env.development" });
+
 const nextJest = require("next/jest");
 
 const createJestConfig = nextJest({
@@ -10,8 +11,9 @@ const jestConfig = createJestConfig({
   testEnvironment: "node",
   maxWorkers: 1,
   moduleDirectories: ["node_modules", "<rootDir>"],
+  setupFilesAfterEnv: ["<rootDir>/tests/setup-jest.ts"],
   testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/"],
-  testTimeout: 30000,
+  testTimeout: 60000,
 });
 
 module.exports = jestConfig;

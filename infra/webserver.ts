@@ -3,6 +3,9 @@
 // to emit absolute links (emails, server-side fetches).
 
 export function getOrigin(): string {
+  if (process.env.TEST_BASE_URL) {
+    return process.env.TEST_BASE_URL;
+  }
   if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
