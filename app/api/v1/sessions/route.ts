@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { canRequest, errorToResponse, setSessionCookie } from "infra/controller";
+import {
+  canRequest,
+  clearSessionCookie,
+  errorToResponse,
+  loadCurrentUser,
+  setSessionCookie,
+} from "infra/controller";
+import { AuthenticationError } from "infra/errors";
 import { filterOutput } from "models/authorization";
 import { getUser } from "models/authentication";
-import { createSession } from "models/session";
+import { createSession, expireSessionById } from "models/session";
 import { serializePublicUser } from "models/user";
 
 export async function POST(request: NextRequest) {
@@ -22,6 +29,33 @@ export async function POST(request: NextRequest) {
         publicUser as unknown as Record<string, unknown>,
       ),
       { status: 201 },
+    );
+  } catch (err) {
+    return errorToResponse(err);
+  }
+}
+
+export async function DELETE() {
+  try {
+    const { user, session } = await loadCurrentUser();
+    if (!session || !user) {
+      throw new AuthenticationError({
+        cause: new Error("DELETE /api/v1/sessions without an active session"),
+        message: "Sessão inválida.",
+        action: "Faça login para continuar.",
+      });
+    }
+
+    const expiredSession = await expireSessionById(session.id);
+    await clearSessionCookie();
+
+    return NextResponse.json(
+      filterOutput(
+        { id: user.id, features: user.features },
+        "read:session",
+        expiredSession as unknown as Record<string, unknown>,
+      ),
+      { status: 200 },
     );
   } catch (err) {
     return errorToResponse(err);
