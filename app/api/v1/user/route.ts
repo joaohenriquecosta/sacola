@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 
-import {
-  errorToResponse,
-  loadCurrentUser,
-  setSessionCookie,
-} from "infra/controller";
+import { errorToResponse, loadCurrentUser, setSessionCookie } from "infra/controller";
 import { AuthenticationError } from "infra/errors";
 import { filterOutput } from "models/authorization";
 import { refreshSession } from "models/session";

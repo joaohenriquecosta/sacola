@@ -21,11 +21,7 @@ import {
   ServiceError,
   ValidationError,
 } from "infra/errors";
-import {
-  AuthorizedUser,
-  PERMISSIONS,
-  isAuthorized,
-} from "models/authorization";
+import { AuthorizedUser, PERMISSIONS, isAuthorized } from "models/authorization";
 import { Session, getValidSessionByToken } from "models/session";
 import { PublicUser, getUserById, serializePublicUser } from "models/user";
 

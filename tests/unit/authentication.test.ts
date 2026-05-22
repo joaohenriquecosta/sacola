@@ -73,9 +73,7 @@ describe("getUser failure paths (anti-enumeration)", () => {
   test("throws AuthenticationError on wrong password — no dummy compare needed", async () => {
     mockedGetUserByEmail.mockResolvedValueOnce(storedUser);
     mockedCompare.mockResolvedValueOnce(false);
-    await expect(getUser("alice@example.com", "wrong")).rejects.toBeInstanceOf(
-      AuthenticationError,
-    );
+    await expect(getUser("alice@example.com", "wrong")).rejects.toBeInstanceOf(AuthenticationError);
     expect(mockedDummy).not.toHaveBeenCalled();
   });
 

@@ -11,16 +11,11 @@ export async function hashPassword(password: string): Promise<string> {
   return await hash(password, saltRounds);
 }
 
-export async function comparePassword(
-  password: string,
-  hashedPassword: string,
-): Promise<boolean> {
+export async function comparePassword(password: string, hashedPassword: string): Promise<boolean> {
   return await compare(password, hashedPassword);
 }
 
-export async function hashObjectPassword<T extends { password: string }>(
-  object: T,
-): Promise<T> {
+export async function hashObjectPassword<T extends { password: string }>(object: T): Promise<T> {
   return { ...object, password: await hashPassword(object.password) };
 }
 

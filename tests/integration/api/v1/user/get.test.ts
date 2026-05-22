@@ -49,9 +49,7 @@ describe("GET /api/v1/user", () => {
       expect(response.status).toBe(200);
       expect(body.username).toBe(VALID_USER.username);
       expect(body.email).toBe(VALID_USER.email);
-      expect(body.features).toEqual(
-        expect.arrayContaining(["create:session", "read:user:self"]),
-      );
+      expect(body.features).toEqual(expect.arrayContaining(["create:session", "read:user:self"]));
       expect(body.password).toBeUndefined();
     });
 

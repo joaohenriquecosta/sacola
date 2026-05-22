@@ -7,10 +7,7 @@ import { AuthenticationError, NotFoundError, ValidationError } from "infra/error
 import { comparePassword, getAuthDummyPasswordHash } from "models/password";
 import { User, getUserByEmail } from "models/user";
 
-export async function getUser(
-  providedEmail: unknown,
-  providedPassword: unknown,
-): Promise<User> {
+export async function getUser(providedEmail: unknown, providedPassword: unknown): Promise<User> {
   if (
     typeof providedEmail !== "string" ||
     typeof providedPassword !== "string" ||
