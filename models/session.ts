@@ -23,11 +23,22 @@ export type Session = {
 export async function createSession(userId: string): Promise<Session> {
   const user = await getUserById(userId);
   if (!isAuthorized(user, "create:session")) {
-    throw new ForbiddenError({
-      cause: new Error(`User ${user.id} cannot create sessions`),
-      message: "Você não possui permissão para criar sessões.",
-      action: "Entre em contato com o administrador da conta.",
-    });
+    // Unactivated users have features = ["read:activation_token"] only. Tell
+    // them where to look — but only the login route reaches this point with a
+    // verified password, so revealing activation status is gated on knowing
+    // the credentials (acceptable enumeration trade-off).
+    const isUnactivated = user.features.includes("read:activation_token");
+    throw isUnactivated
+      ? new AuthenticationError({
+          cause: new Error(`User ${user.id} is not activated`),
+          message: "Sua conta ainda não foi ativada.",
+          action: "Verifique seu email pelo link de ativação enviado no cadastro.",
+        })
+      : new ForbiddenError({
+          cause: new Error(`User ${user.id} cannot create sessions`),
+          message: "Você não possui permissão para criar sessões.",
+          action: "Entre em contato com o administrador da conta.",
+        });
   }
 
   const token = randomBytes(48).toString("hex");

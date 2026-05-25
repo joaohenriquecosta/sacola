@@ -1,5 +1,7 @@
 import {
   clearDatabase,
+  deleteAllEmails,
+  registerAndActivateUser,
   runPendingMigrations,
   testBaseUrl,
   waitForAllServices,
@@ -15,11 +17,8 @@ beforeAll(async () => {
   await waitForAllServices();
   await clearDatabase();
   await runPendingMigrations();
-  await fetch(`${testBaseUrl}/api/v1/users`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(VALID_USER),
-  });
+  await deleteAllEmails();
+  await registerAndActivateUser(VALID_USER);
 });
 
 async function postSession(body: unknown) {

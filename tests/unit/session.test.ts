@@ -31,7 +31,7 @@ const userWithSessionFeature = {
   username: "alice",
   email: "alice@example.com",
   password: "$2a$01$hash",
-  features: [...PERMISSIONS.default.user],
+  features: [...PERMISSIONS.default.activatedUser],
   created_at: new Date(),
   updated_at: new Date(),
 };
