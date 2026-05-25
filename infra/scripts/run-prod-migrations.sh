@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-URL="${DATABASE_URL_NON_POOLING:?DATABASE_URL_NON_POOLING must be set in the Vercel project (Neon-Vercel integration with prefix DATABASE)}"
+URL="${DATABASE_URL_UNPOOLED:?DATABASE_URL_UNPOOLED must be set in the Vercel project (provided by the Neon-Vercel integration)}"
 
 case "$URL" in
   *sslmode=*) ;;

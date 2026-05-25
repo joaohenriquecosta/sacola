@@ -24,10 +24,10 @@ Production runs on **Vercel** (Next.js host) + **Neon** (managed Postgres). Prev
    | **Environments → Development**            | ❌ (local dev uses Docker, not Neon)                                               |
    | **Create database branch for Production** | ❌ (prod must keep pointing at the Neon `main` branch)                             |
    | **Create database branch for Preview**    | ✅ (each preview gets a fresh isolated branch, auto-deleted with the preview)      |
-   | **Custom Prefix**                         | `DATABASE` → generates `DATABASE_URL`, `DATABASE_URL_NON_POOLING`, etc.            |
+   | **Custom Prefix**                         | `DATABASE` → generates `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, etc.               |
    | **Sensitive**                             | Off                                                                                |
 
-   This is the critical step. The prefix must be `DATABASE` so the runtime picks up `DATABASE_URL` (pooled) and the build picks up `DATABASE_URL_NON_POOLING` (direct, used by `node-pg-migrate`).
+   This is the critical step. The prefix must be `DATABASE` so the runtime picks up `DATABASE_URL` (pooled) and the build picks up `DATABASE_URL_UNPOOLED` (direct, used by `node-pg-migrate`).
 
 ### 3. Import the repo into Vercel
 
@@ -52,7 +52,7 @@ The script checks the golden path (register → login → user → logout), anti
 
 ## How deploys work
 
-- **Push to `main`** → production deploy. `vercel-build` runs migrations against `DATABASE_URL_NON_POOLING` on the Neon `main` branch, then `next build`. Runtime queries use `DATABASE_URL` (pooled).
+- **Push to `main`** → production deploy. `vercel-build` runs migrations against `DATABASE_URL_UNPOOLED` on the Neon `main` branch, then `next build`. Runtime queries use `DATABASE_URL` (pooled).
 - **Push to any other branch / open a PR** → preview deploy. The Neon-Vercel integration auto-creates a Neon DB branch from `main`. `vercel-build` applies migrations on that branch (isolated from prod). The preview URL is reported on the PR.
 - **Preview deleted / PR merged** → Neon branch is auto-deleted.
 
@@ -60,7 +60,7 @@ This means each PR can ship migrations without risk to production data, and you 
 
 ## Troubleshooting
 
-- **Build fails at `node-pg-migrate up`**: usually means `DATABASE_URL_NON_POOLING` isn't set. Check the integration is installed and the prefix is `DATABASE` (not the default `STORAGE`).
+- **Build fails at `node-pg-migrate up`**: usually means `DATABASE_URL_UNPOOLED` isn't set. Check the integration is installed and the prefix is `DATABASE` (not the default `STORAGE`).
 - **Runtime 500s with "Erro na conexão com o Banco de Dados"**: `DATABASE_URL` missing or wrong. Verify the var is set in the Vercel project's env, not just the integration's.
 - **Smoke script reports anti-timing failure**: `dummy bcrypt` may not be firing on the missing-user path — check `models/authentication.ts` was deployed.
 - **Cookie missing `Secure`**: only set when `NODE_ENV === "production"`. If the preview is `http://`, the test will warn — but Vercel previews are always HTTPS, so this should never happen in practice.
