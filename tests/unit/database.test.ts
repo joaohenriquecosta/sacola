@@ -53,13 +53,52 @@ describe("getNewClient", () => {
     expect(client).toBe(mockClientInstance);
   });
 
-  test("enables SSL when NODE_ENV is production", async () => {
+  test("uses DATABASE_URL via connectionString when set (Neon/Vercel path)", async () => {
+    process.env.DATABASE_URL = "postgresql://u:p@host.neon.tech/db?sslmode=require";
+    setNodeEnv("production");
+    await getNewClient();
+    expect(MockedClient).toHaveBeenCalledWith({
+      connectionString: "postgresql://u:p@host.neon.tech/db?sslmode=require",
+      ssl: true,
+    });
+  });
+
+  test("forces SSL on the DATABASE_URL path in production (Neon refuses cleartext)", async () => {
+    process.env.DATABASE_URL = "postgresql://u:p@host.neon.tech/db";
     setNodeEnv("production");
     await getNewClient();
     expect(MockedClient).toHaveBeenCalledWith(expect.objectContaining({ ssl: true }));
   });
 
-  test("disables SSL outside production", async () => {
+  test("disables SSL on the DATABASE_URL path outside production (local Docker)", async () => {
+    process.env.DATABASE_URL = "postgresql://postgres:postgres@localhost/sacola_dev";
+    setNodeEnv("development");
+    await getNewClient();
+    expect(MockedClient).toHaveBeenCalledWith(expect.objectContaining({ ssl: false }));
+  });
+
+  test("falls back to individual POSTGRES_* vars when DATABASE_URL is unset", async () => {
+    delete process.env.DATABASE_URL;
+    setNodeEnv("production");
+    await getNewClient();
+    expect(MockedClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        host: process.env.POSTGRES_HOST,
+        user: process.env.POSTGRES_USER,
+        database: process.env.POSTGRES_DB,
+      }),
+    );
+  });
+
+  test("enables SSL when NODE_ENV is production and falling back to POSTGRES_* vars", async () => {
+    delete process.env.DATABASE_URL;
+    setNodeEnv("production");
+    await getNewClient();
+    expect(MockedClient).toHaveBeenCalledWith(expect.objectContaining({ ssl: true }));
+  });
+
+  test("disables SSL outside production when falling back to POSTGRES_* vars", async () => {
+    delete process.env.DATABASE_URL;
     setNodeEnv("development");
     await getNewClient();
     expect(MockedClient).toHaveBeenCalledWith(expect.objectContaining({ ssl: false }));

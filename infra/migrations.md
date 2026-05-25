@@ -10,7 +10,9 @@ Forward-only schema migrations powered by [node-pg-migrate](https://github.com/s
 | `npm run migrations:up:dry`           | Lists pending migrations without applying them.         |
 | `npm run migrations:up`               | Runs all pending migrations against `.env.development`. |
 
-In production / preview, migrations are applied via `POST /api/v1/migrations` (gated by `create:migration`).
+In production and preview deploys (Vercel), migrations run during the build step via the `vercel-build` script (`node-pg-migrate up` against `DATABASE_URL_UNPOOLED`, then `next build`). Each Vercel preview gets its own Neon DB branch through the Neon-Vercel integration, so migrations are applied independently per branch.
+
+The `POST /api/v1/migrations` endpoint is **only available in dev and test** — it returns 404 in production. It exists so the test orchestrator can re-apply migrations after `clearDatabase`; production never relies on it.
 
 ## Conventions
 
