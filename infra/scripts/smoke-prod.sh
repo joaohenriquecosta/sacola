@@ -69,13 +69,16 @@ else
   fail "GET /api/v1/status → $status" "$(cat $BODY_FILE)"
 fi
 
+# Migrations endpoint is gated to 404 in production (build-time migrations
+# only; the route can't bundle `infra/migrations/*.js` in the serverless
+# function). The golden path below validates migrations actually applied.
 resp=$(req GET "$BASE_URL/api/v1/migrations")
 status="${resp%%:*}"
-if [ "$status" = "200" ] && [ "$(jq 'length' < $BODY_FILE)" = "0" ]; then
-  pass "GET /api/v1/migrations → 200 + []"
+if [ "$status" = "404" ]; then
+  pass "GET /api/v1/migrations → 404 (gated in production)"
 else
   fail "GET /api/v1/migrations → $status / $(cat $BODY_FILE)" \
-       "if non-empty, migrations did not apply on deploy"
+       "expected 404 — migrations endpoint should be disabled in prod"
 fi
 
 section "2. Golden path (register → login → user → logout)"

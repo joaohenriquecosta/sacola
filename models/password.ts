@@ -4,8 +4,6 @@
 
 import { compare, hash } from "bcryptjs";
 
-let authDummyHashPromise: Promise<string> | null = null;
-
 export async function hashPassword(password: string): Promise<string> {
   const saltRounds = process.env.NODE_ENV === "production" ? 14 : 1;
   return await hash(password, saltRounds);
@@ -19,7 +17,12 @@ export async function hashObjectPassword<T extends { password: string }>(object:
   return { ...object, password: await hashPassword(object.password) };
 }
 
+// Eagerly kick off the hash at module load so the first ghost-email login
+// doesn't pay ~1.5s for bcrypt.hash on a cold Lambda. The promise is awaited
+// later; here we just start it. A real login on the same cold instance also
+// runs bcrypt.compare, so the cold-start cost is incurred anyway.
+const authDummyHashPromise: Promise<string> = hashPassword("__auth_timing_dummy_v1__");
+
 export async function getAuthDummyPasswordHash(): Promise<string> {
-  authDummyHashPromise ??= hashPassword("__auth_timing_dummy_v1__");
   return await authDummyHashPromise;
 }

@@ -4,7 +4,15 @@ import { errorToResponse } from "infra/controller";
 import { NotFoundError } from "infra/errors";
 import { listPendingMigrations, runPendingMigrations } from "models/migrator";
 
+// Both verbs are dev/test-only. In production and preview deploys, migrations
+// run at build time (`npm run vercel-build`). Runtime listing also breaks
+// because Next.js doesn't bundle `infra/migrations/*.js` into the serverless
+// function, so `node-pg-migrate` can't find them. The test orchestrator still
+// hits these locally to reset state after clearDatabase.
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return errorToResponse(new NotFoundError());
+  }
   try {
     const pending = await listPendingMigrations();
     return NextResponse.json(pending);
@@ -13,11 +21,6 @@ export async function GET() {
   }
 }
 
-// POST only works outside production. In production and preview deploys,
-// migrations run at build time (`npm run vercel-build`) — exposing this
-// endpoint there would let anyone re-run or list pending migrations.
-// The test orchestrator still hits it locally to reset state after
-// clearDatabase, which is why it isnt removed entirely.
 export async function POST() {
   if (process.env.NODE_ENV === "production") {
     return errorToResponse(new NotFoundError());
