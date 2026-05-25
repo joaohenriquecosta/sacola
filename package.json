@@ -20,7 +20,7 @@
     "dev": "npm run services:up && npm run services:wait:db && npm run migrations:up && next dev",
     "postdev": "npm run services:stop",
     "build": "next build",
-    "vercel-build": "DATABASE_URL=\"$DATABASE_URL_NON_POOLING\" node-pg-migrate -m infra/migrations up && next build",
+    "vercel-build": "infra/scripts/run-prod-migrations.sh && next build",
     "start": "next start",
     "services:up": "docker compose -f infra/compose.yaml up -d",
     "services:stop": "docker compose -f infra/compose.yaml stop",

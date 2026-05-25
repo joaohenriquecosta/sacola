@@ -55,10 +55,26 @@ describe("getNewClient", () => {
 
   test("uses DATABASE_URL via connectionString when set (Neon/Vercel path)", async () => {
     process.env.DATABASE_URL = "postgresql://u:p@host.neon.tech/db?sslmode=require";
+    setNodeEnv("production");
     await getNewClient();
     expect(MockedClient).toHaveBeenCalledWith({
       connectionString: "postgresql://u:p@host.neon.tech/db?sslmode=require",
+      ssl: true,
     });
+  });
+
+  test("forces SSL on the DATABASE_URL path in production (Neon refuses cleartext)", async () => {
+    process.env.DATABASE_URL = "postgresql://u:p@host.neon.tech/db";
+    setNodeEnv("production");
+    await getNewClient();
+    expect(MockedClient).toHaveBeenCalledWith(expect.objectContaining({ ssl: true }));
+  });
+
+  test("disables SSL on the DATABASE_URL path outside production (local Docker)", async () => {
+    process.env.DATABASE_URL = "postgresql://postgres:postgres@localhost/sacola_dev";
+    setNodeEnv("development");
+    await getNewClient();
+    expect(MockedClient).toHaveBeenCalledWith(expect.objectContaining({ ssl: false }));
   });
 
   test("falls back to individual POSTGRES_* vars when DATABASE_URL is unset", async () => {
