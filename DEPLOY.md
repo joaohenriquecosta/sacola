@@ -44,8 +44,17 @@ Production runs on **Vercel** (Next.js host) + **Neon** (managed Postgres). Prev
 
 ### 4. Verify with the smoke script
 
+If **Vercel Deployment Protection** is on for the project (default on the Pro plan), create a bypass secret first: Project Settings → Deployment Protection → **Protection Bypass for Automation** → Add Secret. Save the value as `VERCEL_AUTOMATION_BYPASS_SECRET` in your shell. Then:
+
 ```sh
-BASE_URL=https://<your-project>.vercel.app ./infra/scripts/smoke-prod.sh
+VERCEL_AUTOMATION_BYPASS_SECRET=<secret> \
+  ./infra/scripts/smoke-prod.sh https://<your-project>.vercel.app
+```
+
+If Deployment Protection is off, omit the env var:
+
+```sh
+./infra/scripts/smoke-prod.sh https://<your-project>.vercel.app
 ```
 
 The script checks the golden path (register → login → user → logout), anti-enumeration timing on bad credentials, validation 400s, and that migrations applied (`GET /api/v1/migrations` returns `[]`). All checks must pass before merging the next feature.

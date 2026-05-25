@@ -5,6 +5,12 @@
 #   BASE_URL=https://sacola.vercel.app ./infra/scripts/smoke-prod.sh
 #   ./infra/scripts/smoke-prod.sh https://sacola.vercel.app
 #
+# When Vercel Deployment Protection is on, pass the bypass secret so every
+# request goes through:
+#   VERCEL_AUTOMATION_BYPASS_SECRET=<secret> ./infra/scripts/smoke-prod.sh <url>
+# (create the secret under Project Settings → Deployment Protection →
+#  Protection Bypass for Automation.)
+#
 # Exits 0 if all checks pass, 1 otherwise. Generates a unique username per
 # run (suffixed with epoch) so it can be rerun without manual cleanup.
 # The smoke user persists in the database — drop it manually if needed:
@@ -20,6 +26,11 @@ fi
 BASE_URL="${BASE_URL%/}"
 
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 1; }
+
+BYPASS_ARGS=()
+if [ -n "${VERCEL_AUTOMATION_BYPASS_SECRET:-}" ]; then
+  BYPASS_ARGS=(-H "x-vercel-protection-bypass: $VERCEL_AUTOMATION_BYPASS_SECRET")
+fi
 
 SUFFIX=$(date +%s)
 USERNAME="smoke${SUFFIX}"
@@ -45,7 +56,7 @@ req() {
   local url="$1"; shift
   curl -s -o "$BODY_FILE" -D "$HDR_FILE" \
        -w "%{http_code}:%{time_total}" \
-       -X "$method" "$@" "$url"
+       -X "$method" "${BYPASS_ARGS[@]}" "$@" "$url"
 }
 
 section "1. Sanity"
@@ -58,13 +69,16 @@ else
   fail "GET /api/v1/status → $status" "$(cat $BODY_FILE)"
 fi
 
+# Migrations endpoint is gated to 404 in production (build-time migrations
+# only; the route can't bundle `infra/migrations/*.js` in the serverless
+# function). The golden path below validates migrations actually applied.
 resp=$(req GET "$BASE_URL/api/v1/migrations")
 status="${resp%%:*}"
-if [ "$status" = "200" ] && [ "$(jq 'length' < $BODY_FILE)" = "0" ]; then
-  pass "GET /api/v1/migrations → 200 + []"
+if [ "$status" = "404" ]; then
+  pass "GET /api/v1/migrations → 404 (gated in production)"
 else
   fail "GET /api/v1/migrations → $status / $(cat $BODY_FILE)" \
-       "if non-empty, migrations did not apply on deploy"
+       "expected 404 — migrations endpoint should be disabled in prod"
 fi
 
 section "2. Golden path (register → login → user → logout)"
