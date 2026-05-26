@@ -1,5 +1,6 @@
 import {
   clearDatabase,
+  deleteAllEmails,
   runPendingMigrations,
   testBaseUrl,
   waitForAllServices,
@@ -9,6 +10,7 @@ beforeAll(async () => {
   await waitForAllServices();
   await clearDatabase();
   await runPendingMigrations();
+  await deleteAllEmails();
 });
 
 async function postUser(body: unknown) {
@@ -36,9 +38,8 @@ describe("POST /api/v1/users", () => {
       );
       expect(responseBody.username).toBe("alice");
       expect(responseBody.email).toBe("alice@example.com");
-      expect(responseBody.features).toEqual(
-        expect.arrayContaining(["create:session", "read:user:self"]),
-      );
+      // New users are unactivated until they click the activation link.
+      expect(responseBody.features).toEqual(["read:activation_token"]);
       expect(responseBody.password).toBeUndefined();
       expect(Date.parse(responseBody.created_at)).not.toBeNaN();
     });

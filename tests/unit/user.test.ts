@@ -25,7 +25,7 @@ const existingUser = {
   username: "alice",
   email: "alice@example.com",
   password: "$2a$01$hash",
-  features: [...PERMISSIONS.default.user],
+  features: [...PERMISSIONS.default.unactivatedUser],
   created_at: new Date("2026-01-01"),
   updated_at: new Date("2026-01-02"),
 };
@@ -108,7 +108,7 @@ describe("createUser happy path", () => {
     expect(email).toBe("bob@example.com");
     expect(String(password).startsWith("$2")).toBe(true);
     expect(password).not.toBe("longenough!123");
-    expect(features).toEqual([...PERMISSIONS.default.user]);
+    expect(features).toEqual([...PERMISSIONS.default.unactivatedUser]);
   });
 });
 

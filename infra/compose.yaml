@@ -22,5 +22,22 @@ services:
     volumes:
       - sacola_pgdata:/var/lib/postgresql/data
 
+  # SMTP catcher for local dev + tests. Replaces sj26/mailcatcher with the
+  # actively-maintained mailpit (smaller image, same idea: SMTP in, web UI to
+  # inspect, HTTP API to fetch/delete messages programmatically).
+  #   SMTP:    localhost:1025 (no auth)
+  #   Web UI:  http://localhost:8025
+  #   API:     http://localhost:8025/api/v1/messages
+  mailpit:
+    container_name: sacola_mailpit
+    image: "axllent/mailpit:v1.21"
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    environment:
+      MP_MAX_MESSAGES: "500"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+
 volumes:
   sacola_pgdata:

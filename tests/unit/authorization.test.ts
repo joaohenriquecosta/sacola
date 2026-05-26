@@ -4,11 +4,11 @@ import { PERMISSIONS, filterOutput, isAuthorized } from "models/authorization";
 const anonymous = { id: null, features: PERMISSIONS.default.anonymousUser };
 const alice = {
   id: "00000000-0000-0000-0000-000000000001",
-  features: PERMISSIONS.default.user,
+  features: PERMISSIONS.default.activatedUser,
 };
 const bob = {
   id: "00000000-0000-0000-0000-000000000002",
-  features: PERMISSIONS.default.user,
+  features: PERMISSIONS.default.activatedUser,
 };
 
 describe("isAuthorized", () => {

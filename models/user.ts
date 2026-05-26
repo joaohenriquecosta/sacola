@@ -39,7 +39,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
 
   const withFeatures = {
     ...input,
-    features: [...PERMISSIONS.default.user],
+    features: [...PERMISSIONS.default.unactivatedUser],
   };
   const secured = await hashObjectPassword(withFeatures);
 
@@ -85,6 +85,12 @@ export async function getUserByUsername(username: string): Promise<User> {
 export function serializePublicUser(user: User): PublicUser {
   const { password: _password, ...publicFields } = user;
   return publicFields;
+}
+
+// Used by the registration flow to compensate when the activation email fails
+// to send (see models/activation.ts:registerUser).
+export async function deleteUserById(id: string): Promise<void> {
+  await query({ text: `DELETE FROM users WHERE id = $1;`, values: [id] });
 }
 
 function validateInput(input: CreateUserInput): void {

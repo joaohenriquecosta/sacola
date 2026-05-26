@@ -81,7 +81,7 @@ else
        "expected 404 — migrations endpoint should be disabled in prod"
 fi
 
-section "2. Golden path (register → login → user → logout)"
+section "2. Registration + activation gating"
 
 resp=$(req POST "$BASE_URL/api/v1/users" \
        -H "Content-Type: application/json" \
@@ -89,9 +89,9 @@ resp=$(req POST "$BASE_URL/api/v1/users" \
 status="${resp%%:*}"
 if [ "$status" = "201" ]; then
   has_password=$(jq 'has("password")' < $BODY_FILE)
-  has_features=$(jq '.features | type == "array" and length > 0' < $BODY_FILE)
-  if [ "$has_password" = "false" ] && [ "$has_features" = "true" ]; then
-    pass "POST /api/v1/users → 201, no password leak, features present"
+  features=$(jq -c '.features' < $BODY_FILE)
+  if [ "$has_password" = "false" ] && [ "$features" = '["read:activation_token"]' ]; then
+    pass "POST /api/v1/users → 201, unactivated features, no password leak"
   else
     fail "POST /api/v1/users payload off" "$(cat $BODY_FILE)"
   fi
@@ -99,49 +99,19 @@ else
   fail "POST /api/v1/users → $status" "$(cat $BODY_FILE)"
 fi
 
+# Login while unactivated must be rejected with the activation message.
+# We can't reach the activation link in prod from the smoke runner (no DB
+# access, no mailbox), so the post-activation login/logout/cookie path is
+# only exercised by integration tests in CI.
 resp=$(req POST "$BASE_URL/api/v1/sessions" \
        -H "Content-Type: application/json" \
-       -c "$COOKIE_JAR" \
        -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
 status="${resp%%:*}"
-if [ "$status" = "201" ]; then
-  pass "POST /api/v1/sessions → 201"
-  if grep -qi "HttpOnly" "$HDR_FILE"; then pass "  cookie has HttpOnly"; else fail "  cookie missing HttpOnly"; fi
-  if grep -qi "SameSite=Lax" "$HDR_FILE"; then pass "  cookie has SameSite=Lax"; else fail "  cookie missing SameSite=Lax"; fi
-  if echo "$BASE_URL" | grep -q "^https"; then
-    if grep -qi "Secure" "$HDR_FILE"; then pass "  cookie has Secure (https)"; else fail "  cookie missing Secure on https"; fi
-  fi
+msg=$(jq -r '.message // ""' < $BODY_FILE)
+if [ "$status" = "401" ] && echo "$msg" | grep -qi "ativada"; then
+  pass "POST /api/v1/sessions while unactivated → 401 with activation message"
 else
-  fail "POST /api/v1/sessions → $status" "$(cat $BODY_FILE)"
-fi
-
-resp=$(req GET "$BASE_URL/api/v1/user" -b "$COOKIE_JAR")
-status="${resp%%:*}"
-if [ "$status" = "200" ]; then
-  got_username=$(jq -r '.username' < $BODY_FILE)
-  if [ "$got_username" = "$USERNAME" ]; then
-    pass "GET /api/v1/user → 200, correct user"
-  else
-    fail "GET /api/v1/user wrong username" "expected $USERNAME got $got_username"
-  fi
-else
-  fail "GET /api/v1/user → $status" "$(cat $BODY_FILE)"
-fi
-
-resp=$(req DELETE "$BASE_URL/api/v1/sessions" -b "$COOKIE_JAR")
-status="${resp%%:*}"
-if [ "$status" = "200" ] && grep -qi "Max-Age=0" "$HDR_FILE"; then
-  pass "DELETE /api/v1/sessions → 200 + Max-Age=0"
-else
-  fail "DELETE /api/v1/sessions broken" "$(cat $HDR_FILE)"
-fi
-
-resp=$(req GET "$BASE_URL/api/v1/user" -b "$COOKIE_JAR")
-status="${resp%%:*}"
-if [ "$status" = "401" ]; then
-  pass "GET /api/v1/user post-logout → 401"
-else
-  fail "GET /api/v1/user post-logout → $status (should be 401)"
+  fail "POST /api/v1/sessions while unactivated → $status / $msg"
 fi
 
 section "3. Anti-enumeration"

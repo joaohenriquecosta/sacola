@@ -10,8 +10,16 @@ import { InternalServerError } from "infra/errors";
 
 export const PERMISSIONS = {
   default: {
-    anonymousUser: ["create:user", "create:session", "read:status"] as const,
-    user: [
+    anonymousUser: [
+      "create:user",
+      "create:session",
+      "read:status",
+      "read:activation_token",
+    ] as const,
+    // Users who registered but haven't clicked the activation link yet.
+    // Can do nothing except be activated.
+    unactivatedUser: ["read:activation_token"] as const,
+    activatedUser: [
       "create:session",
       "read:session",
       "update:user",
@@ -24,6 +32,7 @@ export const PERMISSIONS = {
     session: ["create:session", "read:session"] as const,
     status: ["read:status"] as const,
     migration: ["read:migration", "create:migration"] as const,
+    activation_token: ["read:activation_token"] as const,
   },
 } as const;
 
@@ -95,6 +104,17 @@ export function filterOutput(
       };
     }
     return {};
+  }
+
+  if (feature === "read:activation_token") {
+    return {
+      id: resource.id,
+      user_id: resource.user_id,
+      used_at: resource.used_at,
+      expires_at: resource.expires_at,
+      created_at: resource.created_at,
+      updated_at: resource.updated_at,
+    };
   }
 
   return resource;
