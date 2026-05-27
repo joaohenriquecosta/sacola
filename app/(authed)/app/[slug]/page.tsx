@@ -13,6 +13,7 @@ import { NotFoundError } from "infra/errors";
 import { loadCurrentUser } from "infra/controller";
 import { getCompanyBySlug } from "models/company";
 import { getMembership, listMembersByCompany } from "models/membership";
+import { listProductsByCompany } from "models/product";
 
 type Params = Promise<{ slug: string }>;
 
@@ -33,7 +34,9 @@ export default async function CompanyPage({ params }: { params: Params }) {
   if (!membership) notFound();
 
   const canManage = isManagementRole(membership.role);
+  const canSeeProducts = membership.features.includes("read:product");
   const members = await listMembersByCompany(company.id);
+  const products = canSeeProducts ? await listProductsByCompany(company.id) : [];
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -81,6 +84,26 @@ export default async function CompanyPage({ params }: { params: Params }) {
           </ul>
         </CardContent>
       </Card>
+
+      {canSeeProducts && (
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div>
+              <CardTitle>Produtos</CardTitle>
+              <CardDescription>
+                {products.length === 0
+                  ? "Nenhum produto cadastrado."
+                  : `${products.length} ${products.length === 1 ? "item" : "itens"} no catálogo.`}
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/app/${company.slug}/produtos`}>
+                {membership.features.includes("create:product") ? "Gerenciar" : "Ver tudo"}
+              </Link>
+            </Button>
+          </CardHeader>
+        </Card>
+      )}
     </div>
   );
 }
