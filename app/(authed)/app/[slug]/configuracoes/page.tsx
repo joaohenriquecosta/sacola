@@ -1,6 +1,12 @@
-// Company settings. Edit name/slug (admin+) and delete (owner only). Role
-// gates done on the server before rendering controls — no point shipping a
-// "delete" button to a member who would just get a 403 if they clicked it.
+// Company settings. Open to any member; cards inside are role-gated:
+//
+//   Identidade        admin+
+//   Transferir prop.  owner only
+//   Excluir empresa   owner only
+//   Sair da empresa   admin/member (owner must transfer first)
+//
+// We render the controls only when the requester is allowed to use them so
+// nobody sees buttons that would 403 if clicked.
 
 import { notFound, redirect } from "next/navigation";
 
@@ -8,9 +14,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { loadCurrentUser } from "infra/controller";
 import { NotFoundError } from "infra/errors";
 import { getCompanyBySlug } from "models/company";
-import { getMembership } from "models/membership";
+import { getMembership, listMembersByCompany } from "models/membership";
 import { CompanySettingsForm } from "./settings-form";
 import { DeleteCompanyButton } from "./delete-button";
+import { LeaveCompanyButton } from "./leave-button";
+import { TransferOwnershipForm } from "./transfer-form";
 
 type Params = Promise<{ slug: string }>;
 
@@ -28,25 +36,65 @@ export default async function ConfiguracoesPage({ params }: { params: Params }) 
   }
 
   const membership = await getMembership(user.id, company.id);
-  if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {
-    notFound();
-  }
+  if (!membership) notFound();
+
+  const isOwner = membership.role === "owner";
+  const isAdmin = isOwner || membership.role === "admin";
+  const otherMembers = isOwner
+    ? (await listMembersByCompany(company.id)).filter((m) => m.user_id !== user.id)
+    : [];
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Configurações</h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Identidade</CardTitle>
-          <CardDescription>O nome aparece no menu; o slug forma a URL.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CompanySettingsForm slug={company.slug} name={company.name} />
-        </CardContent>
-      </Card>
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Identidade</CardTitle>
+            <CardDescription>O nome aparece no menu; o slug forma a URL.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CompanySettingsForm slug={company.slug} name={company.name} />
+          </CardContent>
+        </Card>
+      )}
 
-      {membership.role === "owner" && (
+      {isOwner && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Transferir propriedade</CardTitle>
+            <CardDescription>
+              Você se torna gerente; o novo dono assume controle total da empresa.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TransferOwnershipForm
+              slug={company.slug}
+              candidates={otherMembers.map((m) => ({
+                user_id: m.user_id,
+                username: m.username,
+              }))}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {!isOwner && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sair desta empresa</CardTitle>
+            <CardDescription>
+              Você perde acesso imediato. Pode voltar a entrar se for convidado de novo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LeaveCompanyButton slug={company.slug} companyName={company.name} />
+          </CardContent>
+        </Card>
+      )}
+
+      {isOwner && (
         <Card>
           <CardHeader>
             <CardTitle>Excluir empresa</CardTitle>
