@@ -59,11 +59,16 @@ export default async function CompanyPage({ params }: { params: Params }) {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Equipe</CardTitle>
-          <CardDescription>
-            {members.length} {members.length === 1 ? "membro" : "membros"}
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle>Equipe</CardTitle>
+            <CardDescription>
+              {members.length} {members.length === 1 ? "membro" : "membros"}
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/app/${company.slug}/equipe`}>{canManage ? "Gerenciar" : "Ver tudo"}</Link>
+          </Button>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
