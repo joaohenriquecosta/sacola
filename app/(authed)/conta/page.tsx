@@ -7,10 +7,12 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadCurrentUser } from "infra/controller";
 
+// IANA timezone — don't read from process.env.TZ here. On Vercel the var
+// is exposed as POSIX-style (":UTC") which Intl.DateTimeFormat rejects.
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "medium",
   timeStyle: "short",
-  timeZone: process.env.TZ ?? "America/Sao_Paulo",
+  timeZone: "America/Sao_Paulo",
 });
 
 export default async function ContaPage() {
