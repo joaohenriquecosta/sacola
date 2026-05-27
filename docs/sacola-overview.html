@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sacola — Visão Geral e Próximos Passos</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+        --bg: #0b0d12;
+        --surface: #14181f;
+        --surface-2: #1a1f29;
+        --border: #262c38;
+        --text: #e6e9ef;
+        --muted: #9aa3b2;
+        --accent: #7fd9a1;
+        --warn: #f5b06a;
+        --danger: #f47b7b;
+        --link: #8bb4ff;
+        --code-bg: #0f1218;
+        --max-w: 880px;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #fafbfc;
+          --surface: #ffffff;
+          --surface-2: #f3f5f8;
+          --border: #e1e5ed;
+          --text: #1a1f29;
+          --muted: #5b6677;
+          --accent: #1f8b57;
+          --warn: #b46010;
+          --danger: #b3261e;
+          --link: #2754c7;
+          --code-bg: #f3f5f8;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          "Helvetica Neue",
+          sans-serif;
+      }
+      a {
+        color: var(--link);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      header.site {
+        background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+        border-bottom: 1px solid var(--border);
+        padding: 48px 24px 32px;
+      }
+      header.site .inner {
+        max-width: var(--max-w);
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 2.2rem;
+        margin: 0 0 4px;
+        letter-spacing: -0.01em;
+      }
+      h2 {
+        font-size: 1.6rem;
+        margin: 56px 0 12px;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 1.2rem;
+        margin: 32px 0 8px;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 20px 0 6px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+      }
+      .lede {
+        color: var(--muted);
+        margin: 0;
+      }
+      main {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 24px 24px 96px;
+      }
+      .toc {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin: 32px 0;
+      }
+      .toc ol {
+        margin: 8px 0 0 18px;
+        padding: 0;
+      }
+      .toc li {
+        margin: 4px 0;
+      }
+      p {
+        margin: 10px 0 14px;
+      }
+      ul,
+      ol {
+        padding-left: 22px;
+      }
+      li {
+        margin: 4px 0;
+      }
+      code {
+        background: var(--code-bg);
+        padding: 1.5px 6px;
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.92em;
+      }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.88em;
+        line-height: 1.55;
+      }
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 16px 0;
+        font-size: 0.92em;
+      }
+      th,
+      td {
+        border-bottom: 1px solid var(--border);
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .badge {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-size: 0.74em;
+        font-weight: 600;
+        background: var(--surface-2);
+        color: var(--muted);
+        border: 1px solid var(--border);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .badge.ok {
+        color: var(--accent);
+        border-color: rgba(127, 217, 161, 0.4);
+      }
+      .badge.warn {
+        color: var(--warn);
+        border-color: rgba(245, 176, 106, 0.4);
+      }
+      .badge.danger {
+        color: var(--danger);
+        border-color: rgba(244, 123, 123, 0.4);
+      }
+      .note {
+        background: var(--surface);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 8px 8px 0;
+        padding: 12px 16px;
+        margin: 16px 0;
+        color: var(--muted);
+      }
+      .note strong {
+        color: var(--text);
+      }
+      .step-num {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        text-align: center;
+        line-height: 22px;
+        font-size: 0.85em;
+        font-weight: 700;
+        color: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 48px 0;
+      }
+      footer {
+        color: var(--muted);
+        font-size: 0.85em;
+        text-align: center;
+        padding: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="inner">
+        <h1>🛒 Sacola — Visão Geral</h1>
+        <p class="lede">
+          Plataforma multi-tenant de gestão operacional para hortifruti. Documenta as features
+          existentes, serve como tutorial inicial e mapeia os próximos passos baseado nas issues do
+          repositório.
+        </p>
+        <p style="margin-top: 12px; font-size: 0.9em">
+          <span class="badge ok">Produção: sacola.pop.dev.br</span>
+          <span class="badge">Stack: Next.js 16 · Postgres (Neon) · Resend</span>
+          <span class="badge">License: MIT · Open source</span>
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <div class="toc">
+        <strong>Índice</strong>
+        <ol>
+          <li><a href="#estado">Estado atual</a></li>
+          <li>
+            <a href="#tutorial">Tutorial — primeiro contato</a>
+            <ol>
+              <li><a href="#tut-cadastro">Criar conta</a></li>
+              <li><a href="#tut-empresa">Criar uma empresa</a></li>
+              <li><a href="#tut-convite">Convidar membros</a></li>
+              <li><a href="#tut-equipe">Gerenciar equipe e auditoria</a></li>
+              <li><a href="#tut-saida">Sair, transferir ou excluir</a></li>
+            </ol>
+          </li>
+          <li>
+            <a href="#features">Features documentadas</a>
+            <ol>
+              <li><a href="#feat-auth">Autenticação</a></li>
+              <li><a href="#feat-tenancy">Multi-tenancy (empresas)</a></li>
+              <li><a href="#feat-convites">Convites</a></li>
+              <li><a href="#feat-gestao">Gestão de membros</a></li>
+              <li><a href="#feat-auditoria">Auditoria</a></li>
+            </ol>
+          </li>
+          <li>
+            <a href="#arquitetura">Arquitetura e padrões</a>
+            <ol>
+              <li><a href="#arq-stack">Stack</a></li>
+              <li><a href="#arq-layout">Layout do repositório</a></li>
+              <li><a href="#arq-perm">Modelo de permissões em 2 camadas</a></li>
+              <li><a href="#arq-api">Mapa de endpoints</a></li>
+              <li><a href="#arq-schema">Schema atual</a></li>
+            </ol>
+          </li>
+          <li>
+            <a href="#proximos">Próximos passos</a>
+            <ol>
+              <li><a href="#prox-imediato">Imediato (Semana 2 — Catálogos + Estoque)</a></li>
+              <li><a href="#prox-sem3">Semana 3 — Pedidos</a></li>
+              <li><a href="#prox-sem4">Semana 4 — Pagamentos + Telas + Deploy</a></li>
+              <li><a href="#prox-phase2">Phase 2 — pós-MVP</a></li>
+            </ol>
+          </li>
+          <li><a href="#dev">Como rodar localmente</a></li>
+        </ol>
+      </div>
+
+      <h2 id="estado">Estado atual</h2>
+      <p>
+        A plataforma sai do estágio embrionário com os primitivos de identidade e organização
+        prontos. Em produção (<a href="https://sacola.pop.dev.br" target="_blank"
+          >sacola.pop.dev.br</a
+        >) funcionam hoje:
+      </p>
+      <ul>
+        <li>
+          <strong>Auth completa</strong> — cadastro self-service, email de ativação (Resend), login
+          com sessão cookie httpOnly (6h), reenvio de ativação. Anti-enumeração por timing (dummy
+          bcrypt) e por shape de resposta.
+        </li>
+        <li>
+          <strong>Empresas multi-tenant</strong> — qualquer usuário ativado cria uma empresa e vira
+          <em>dono</em>. Mais empresas por usuário, mais usuários por empresa.
+        </li>
+        <li>
+          <strong>Roles em duas camadas</strong> — 3 genéricos (owner/admin/member) + 4 específicos
+          do domínio Sacola (gerente/vendedor/separador/entregador). Mesmo motor de permissão escala
+          pra outros POPs.
+        </li>
+        <li>
+          <strong>Convites por email</strong> — TTL de 7 dias, vale como verificação de email (o
+          convidado pula a etapa de ativação se cria conta inline).
+        </li>
+        <li>
+          <strong>Gestão de membros</strong> — promover/rebaixar, remover, sair, transferir
+          propriedade atômica, reenviar convite (rotaciona o token).
+        </li>
+        <li>
+          <strong>Auditoria</strong> — log append-only de ações de gerenciamento, visível para
+          admin+ em <code>/app/[slug]/auditoria</code>.
+        </li>
+      </ul>
+      <p style="margin-top: 14px">
+        <strong>Suite de testes</strong>: 159 testes (29 suítes) cobrindo unit + integration
+        end-to-end via mailpit. CI roda Jest + Prettier + ESLint + TypeScript + Commitlint + Vercel
+        build preview por PR. Deploy via push em <code>main</code>.
+      </p>
+
+      <hr />
+
+      <h2 id="tutorial">Tutorial — primeiro contato</h2>
+      <p>
+        O passo-a-passo abaixo cobre o caminho dourado do produto hoje. Tudo se passa em
+        <a href="https://sacola.pop.dev.br" target="_blank">sacola.pop.dev.br</a>.
+      </p>
+
+      <h3 id="tut-cadastro"><span class="step-num">1</span>Criar conta</h3>
+      <ol>
+        <li>Em <code>/</code>, clica em <strong>Criar conta</strong>.</li>
+        <li>
+          Preenche username (3-32 alfanuméricos / underscore), email e senha (12+ chars com pelo
+          menos um caractere especial). Submete.
+        </li>
+        <li>
+          Você cai em <code>/cadastro/aguardando-ativacao?email=…</code> e recebe um email do
+          remetente <code>Sacola &lt;noreply@contato.pop.dev.br&gt;</code> com um link que expira em
+          15 minutos. Se não chegou, use o botão <strong>Reenviar email de ativação</strong>.
+        </li>
+        <li>
+          Clica no link → cai em <code>/cadastro/ativar/[token]</code> → o frontend chama a API
+          automaticamente → vê <strong>Conta ativada!</strong>
+        </li>
+        <li>
+          De volta em <code>/login</code>, entra com email + senha. Cookie de sessão é setado e você
+          é redirecionado pra <code>/app</code>.
+        </li>
+      </ol>
+      <div class="note">
+        <strong>Por baixo dos panos:</strong> a senha vai por <code>bcryptjs</code> com 14 rounds em
+        produção (e 1 round em dev/test, pra não travar a suite). No login, o backend faz
+        <code>compare</code> mesmo quando o email não existe (com um hash dummy), pra timing e shape
+        ficarem idênticos — não dá pra enumerar quem é cadastrado.
+      </div>
+
+      <h3 id="tut-empresa"><span class="step-num">2</span>Criar uma empresa</h3>
+      <ol>
+        <li>Em <code>/app</code>, clica em <strong>Criar empresa</strong>.</li>
+        <li>
+          Digita o nome. O slug (parte da URL) é sugerido em tempo real a partir do nome — "Mercado
+          do João" vira <code>mercado-do-joao</code>. Pode editar; se já existe, a API tenta sufixos
+          numéricos (<code>-2</code>, <code>-3</code>…) automaticamente.
+        </li>
+        <li>
+          Submete → cai em <code>/app/[slug]</code> como <strong>Dono</strong>, com a equipe listada
+          (você sozinho por enquanto).
+        </li>
+      </ol>
+
+      <h3 id="tut-convite"><span class="step-num">3</span>Convidar membros</h3>
+      <ol>
+        <li>
+          No dashboard da empresa, clica em <strong>Equipe</strong> (ou diretamente
+          <code>/app/[slug]/equipe</code>).
+        </li>
+        <li>
+          <strong>Convidar</strong> → preenche email + escolhe função no dropdown (Gerente, Membro,
+          Vendedor, Separador, Entregador). Submete.
+        </li>
+        <li>
+          Resend envia o email pro convidado com um link <code>/convite/[token]</code>
+          (TTL 7 dias). O convite aparece em "Convites pendentes" com botões
+          <strong>Reenviar</strong> (rotaciona o token) e <strong>Revogar</strong>.
+        </li>
+        <li>
+          Convidado clica no link:
+          <ul>
+            <li>
+              <strong>Já tem conta com o email convidado</strong> → vê "Aceitar como
+              <code>email@…</code>" e entra direto.
+            </li>
+            <li>
+              <strong>Não tem conta</strong> → vê o form inline (username + senha). O email já está
+              provado pelo clique no link, então a conta é criada já ativada — pula completamente o
+              fluxo de email de ativação.
+            </li>
+            <li>
+              <strong>Logado com email diferente</strong> → bloqueio explícito com mensagem "este
+              convite é para outro email; faça login com a conta convidada".
+            </li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3 id="tut-equipe"><span class="step-num">4</span>Gerenciar equipe e auditoria</h3>
+      <ul>
+        <li>
+          Na <strong>Equipe</strong>: cada linha de membro tem um dropdown de função (PATCH na hora)
+          e botão <strong>Remover</strong>. Owner não aparece nos controles — protegido contra
+          remoção/troca pela API.
+        </li>
+        <li>
+          Em <strong>Auditoria</strong> (botão no dashboard, admin+): linha do tempo reverso com
+          todos os eventos de gerenciamento (criação, convite, aceite, troca de função, remoção,
+          renomear, transferir propriedade). Cada entrada mostra quem fez, o que aconteceu e quando.
+        </li>
+      </ul>
+
+      <h3 id="tut-saida"><span class="step-num">5</span>Sair, transferir ou excluir</h3>
+      <ul>
+        <li>
+          <strong>Membros não-owner</strong>: em <code>/app/[slug]/configuracoes</code>, card "Sair
+          desta empresa" → confirm dialog → você perde acesso imediato.
+        </li>
+        <li>
+          <strong>Owner</strong>: precisa transferir antes. Card "Transferir propriedade" → escolhe
+          um membro no dropdown → digita o username pra confirmar → submit. Você vira
+          <em>Gerente</em>, o destinatário vira <em>Dono</em>. Depois pode usar "Sair desta empresa"
+          normalmente.
+        </li>
+        <li>
+          <strong>Excluir a empresa inteira</strong>: só owner. Card "Excluir empresa" → digita o
+          slug pra confirmar → DELETE remove a empresa + memberships + convites em sequência
+          (compensatória, sem FK).
+        </li>
+      </ul>
+      <div class="note">
+        A transferência é <strong>atômica via compensação</strong>: o owner é demovido pra admin
+        <em>primeiro</em>, depois o destinatário é promovido. Se o segundo update falhar, o owner é
+        re-promovido — nunca ficamos com zero owners (o estado mais catastrófico, porque ninguém
+        mais poderia deletar nem transferir a empresa).
+      </div>
+
+      <hr />
+
+      <h2 id="features">Features documentadas</h2>
+
+      <h3 id="feat-auth">Autenticação</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Recurso</th>
+            <th>Como funciona</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Cadastro self-service</strong></td>
+            <td>
+              <code>POST /api/v1/users</code> valida username (regex), email (regex + max 254
+              chars), senha (12+ chars com especial). Cria registro com
+              <code>features = ["read:activation_token"]</code>
+              (unactivatedUser) e dispara email com link.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Ativação</strong></td>
+            <td>
+              <code>PATCH /api/v1/activations/[token]</code>. Token é 64-hex (32 bytes random), TTL
+              15min, single-use. Em sucesso, features do user trocam pra <code>activatedUser</code>.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Reenvio de ativação</strong></td>
+            <td>
+              <code>POST /api/v1/activations { email }</code>. Sempre 202. Internamente: noop se
+              email não existe ou já está ativado (anti-enum), senão deleta tokens pendentes + manda
+              novo.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Login</strong></td>
+            <td>
+              <code>POST /api/v1/sessions</code>. Cookie <code>sacola_session_id</code> (httpOnly,
+              SameSite=Lax, Secure em prod), TTL 6h. Sessão é DB-backed (token aleatório de 96-hex
+              armazenado em <code>sessions</code>).
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Anti-enumeração</strong></td>
+            <td>
+              Wrong-password e ghost-email retornam <strong>mesmo body</strong> (<em
+                >"Email ou senha inválidos."</em
+              >) e <strong>mesmo timing</strong>
+              (dummy bcrypt no caminho do ghost para igualar a duração da comparação real).
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Conta não ativada</strong></td>
+            <td>
+              Se as credenciais batem mas o user está unactivated, retorna 401 com mensagem clara
+              ("Sua conta ainda não foi ativada") — só após a senha ser verificada (não vaza a quem
+              não conhece a senha).
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="feat-tenancy">Multi-tenancy (empresas)</h3>
+      <p>
+        Toda entidade de negócio é <em>scoped por empresa</em>. Um usuário pertence a N empresas via
+        N rows na tabela <code>memberships</code>; o role da linha é a fonte da verdade pras
+        permissões dentro daquela empresa.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Operação</th>
+            <th>Endpoint</th>
+            <th>Permissão</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Criar empresa</td>
+            <td><code>POST /api/v1/companies</code></td>
+            <td><code>create:company</code> (qualquer ativado)</td>
+          </tr>
+          <tr>
+            <td>Listar minhas empresas</td>
+            <td><code>GET /api/v1/companies</code></td>
+            <td>logado</td>
+          </tr>
+          <tr>
+            <td>Ver detalhes</td>
+            <td><code>GET /api/v1/companies/[slug]</code></td>
+            <td><code>read:company</code> (member+)</td>
+          </tr>
+          <tr>
+            <td>Editar nome/slug</td>
+            <td><code>PATCH /api/v1/companies/[slug]</code></td>
+            <td><code>update:company</code> (admin+)</td>
+          </tr>
+          <tr>
+            <td>Excluir</td>
+            <td><code>DELETE /api/v1/companies/[slug]</code></td>
+            <td><code>delete:company</code> (owner)</td>
+          </tr>
+          <tr>
+            <td>Transferir propriedade</td>
+            <td><code>POST /api/v1/companies/[slug]/transfer-ownership</code></td>
+            <td><code>delete:company</code> (owner)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="feat-convites">Convites</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Operação</th>
+            <th>Endpoint</th>
+            <th>Permissão</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Enviar convite</td>
+            <td><code>POST /api/v1/companies/[slug]/invitations</code></td>
+            <td><code>create:invitation</code> (admin+)</td>
+          </tr>
+          <tr>
+            <td>Listar pendentes</td>
+            <td><code>GET /api/v1/companies/[slug]/invitations</code></td>
+            <td><code>read:invitation</code> (admin+)</td>
+          </tr>
+          <tr>
+            <td>Revogar</td>
+            <td><code>DELETE /api/v1/companies/[slug]/invitations/[id]</code></td>
+            <td><code>delete:invitation</code> (admin+)</td>
+          </tr>
+          <tr>
+            <td>Reenviar (rotaciona token)</td>
+            <td><code>POST /api/v1/companies/[slug]/invitations/[id]/resend</code></td>
+            <td><code>create:invitation</code> (admin+)</td>
+          </tr>
+          <tr>
+            <td>Landing pública</td>
+            <td><code>GET /api/v1/invitations/[token]</code></td>
+            <td>público</td>
+          </tr>
+          <tr>
+            <td>Aceitar</td>
+            <td><code>POST /api/v1/invitations/[token]/accept</code></td>
+            <td>público (cria sessão)</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        <strong>Convite é prova de email.</strong> O endpoint de aceitar tem dois ramos: com sessão
+        existente, exige email da sessão == email do convite; sem sessão, recebe
+        <code>{ username, password }</code>, cria conta <em>já ativada</em> e atribui membership. Em
+        ambos os casos, retorna cookie de sessão.
+      </div>
+
+      <h3 id="feat-gestao">Gestão de membros</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Operação</th>
+            <th>Endpoint</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Listar membros</td>
+            <td><code>GET .../members</code></td>
+            <td>member+. Inclui username; nunca email.</td>
+          </tr>
+          <tr>
+            <td>Trocar role</td>
+            <td><code>PATCH .../members/[user_id]</code></td>
+            <td>admin+. Owner é blindado; promoção pra "owner" via PATCH é proibida.</td>
+          </tr>
+          <tr>
+            <td>Remover outro</td>
+            <td><code>DELETE .../members/[user_id]</code></td>
+            <td>
+              admin+. Não pode remover owner, não pode remover a si mesmo (caminho separado abaixo).
+            </td>
+          </tr>
+          <tr>
+            <td>Sair da empresa</td>
+            <td><code>DELETE .../members/me</code></td>
+            <td>qualquer membro não-owner; idempotente.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="feat-auditoria">Auditoria</h3>
+      <p>
+        Cada ação mutativa loga uma linha em <code>audit_log</code> (append-only, indexado por
+        <code>company_id, created_at DESC</code>). Listing em
+        <code>GET /api/v1/companies/[slug]/audit-log</code> (admin+), surfaceado na UI em
+        <code>/app/[slug]/auditoria</code>.
+      </p>
+      <p><strong>Ações registradas:</strong></p>
+      <pre><code>company.created          company.updated
+ownership.transferred
+invitation.created       invitation.revoked       invitation.resent
+member.joined            member.role_changed      member.removed     member.left</code></pre>
+      <p>
+        O <em>actor_id</em> é resolvido na camada HTTP (a sessão sabe quem é); o log NÃO mora nos
+        modelos pra eles continuarem reaproveitáveis em CLI/orchestrator/testes sem contaminar a
+        auditoria com eventos fantasmas. Se a inserção do log falha, o usuário ainda vê sucesso (a
+        mutação já ocorreu); o erro vai pro <code>console.error</code>.
+      </p>
+
+      <hr />
+
+      <h2 id="arquitetura">Arquitetura e padrões</h2>
+
+      <h3 id="arq-stack">Stack</h3>
+      <ul>
+        <li><strong>Runtime</strong>: Node 24, TypeScript</li>
+        <li><strong>Framework</strong>: Next.js 16 (App Router, sem <code>src/</code>)</li>
+        <li>
+          <strong>DB</strong>: Postgres 16 (Neon em prod, Docker compose em dev) acessado via
+          <code>pg</code> direto — sem ORM, SQL na mão
+        </li>
+        <li>
+          <strong>Migrações</strong>: <code>node-pg-migrate</code>, forward-only, sem
+          <code>.down</code>
+        </li>
+        <li>
+          <strong>Email</strong>: <code>nodemailer</code> sobre SMTP — Resend em prod (sa-east-1),
+          mailpit em dev
+        </li>
+        <li>
+          <strong>Auth</strong>: sessão DB-backed (não JWT), <code>bcryptjs</code> pra senhas (14
+          rounds em prod)
+        </li>
+        <li>
+          <strong>UI</strong>: shadcn primitives copiados em <code>components/ui/</code>, Tailwind
+          4, <code>next-themes</code> pra dark/light global
+        </li>
+        <li>
+          <strong>Testes</strong>: Jest, real Next.js dev server + Postgres + mailpit (sem mocks de
+          DB/email)
+        </li>
+        <li>
+          <strong>Deploy</strong>: Vercel (push em main → produção), Neon-Vercel integration cria DB
+          branches por preview
+        </li>
+      </ul>
+
+      <h3 id="arq-layout">Layout do repositório</h3>
+      <pre><code>app/                Next.js App Router pages + API routes
+  (authed)/         route group com gate de sessão
+  api/v1/           endpoints REST
+components/         shadcn primitives + componentes compartilhados
+infra/              database, mailer, errors, controller, scripts, migrations
+lib/                helpers puros (sem DB) — usáveis em client/server
+models/             camada de dados (1 arquivo por agregado)
+tests/              integration tests (testam contra dev server + DB real)
+docs/               este documento</code></pre>
+
+      <h3 id="arq-perm">Modelo de permissões em 2 camadas</h3>
+      <p>
+        O check <code>isAuthorized(user, feature, scope?)</code> decide qual camada se aplica pela
+        presença da feature em cada catálogo.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Camada 1 — Global</th>
+            <th>Camada 2 — Scoped por empresa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Onde</strong></td>
+            <td><code>users.features</code> (array)</td>
+            <td><code>memberships.role</code> → <code>ROLE_PERMISSIONS[role]</code></td>
+          </tr>
+          <tr>
+            <td><strong>Pra quê</strong></td>
+            <td>login, perfil, criar empresa</td>
+            <td>membros, convites, auditoria, e (futuro) produtos/pedidos/estoque</td>
+          </tr>
+          <tr>
+            <td><strong>Features</strong></td>
+            <td>
+              <code>create:session</code> · <code>read:session</code> · <code>update:user</code> ·
+              <code>read:user:self</code> · <code>read:status</code> · <code>create:company</code>
+            </td>
+            <td>
+              <code>read:company</code> · <code>update:company</code> ·
+              <code>delete:company</code> · <code>read/update/delete:member</code> ·
+              <code>read/create/delete:invitation</code> · <code>read:audit_log</code>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p><strong>Catálogo de roles</strong> (<code>lib/roles.ts</code>):</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Tipo</th>
+            <th>Permissões hoje</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>owner</code></td>
+            <td>genérico</td>
+            <td>tudo + <code>delete:company</code></td>
+          </tr>
+          <tr>
+            <td><code>admin</code></td>
+            <td>genérico</td>
+            <td>tudo de management; não pode excluir</td>
+          </tr>
+          <tr>
+            <td><code>member</code></td>
+            <td>genérico</td>
+            <td>read-only</td>
+          </tr>
+          <tr>
+            <td><code>gerente</code></td>
+            <td>Sacola</td>
+            <td>== admin</td>
+          </tr>
+          <tr>
+            <td><code>vendedor</code></td>
+            <td>Sacola</td>
+            <td>== member</td>
+          </tr>
+          <tr>
+            <td><code>separador</code></td>
+            <td>Sacola</td>
+            <td>== member</td>
+          </tr>
+          <tr>
+            <td><code>entregador</code></td>
+            <td>Sacola</td>
+            <td>== member</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        Os 4 roles do domínio Sacola começam alinhados com os genéricos e
+        <strong>vão divergir em Semana 2-3</strong>, quando os endpoints de produto/pedido/estoque
+        chegarem. A estrutura já está em pé pra esse momento (Open/Closed): adicionar um
+        <code>create:order</code> em <code>vendedor</code> é uma linha em <code>lib/roles.ts</code>,
+        sem mexer em ninguém mais.
+      </div>
+
+      <h3 id="arq-api">Mapa de endpoints</h3>
+      <pre><code>POST   /api/v1/users                                          self-registration
+POST   /api/v1/activations                                    resend activation
+PATCH  /api/v1/activations/[token]                            ativar conta
+POST   /api/v1/sessions                                       login
+DELETE /api/v1/sessions                                       logout
+GET    /api/v1/user                                           perfil + refresh cookie
+GET    /api/v1/status                                         health (DB + versão)
+
+POST   /api/v1/companies                                      criar empresa (vira owner)
+GET    /api/v1/companies                                      listar minhas
+GET    /api/v1/companies/[slug]                               detalhe + role do caller
+PATCH  /api/v1/companies/[slug]                               admin+
+DELETE /api/v1/companies/[slug]                               owner
+
+GET    /api/v1/companies/[slug]/members                       member+
+PATCH  /api/v1/companies/[slug]/members/[user_id]             admin+ (não-owner)
+DELETE /api/v1/companies/[slug]/members/[user_id]             admin+ (não-self)
+DELETE /api/v1/companies/[slug]/members/me                    sair (não-owner)
+
+POST   /api/v1/companies/[slug]/transfer-ownership            owner
+
+GET    /api/v1/companies/[slug]/invitations                   admin+
+POST   /api/v1/companies/[slug]/invitations                   admin+
+DELETE /api/v1/companies/[slug]/invitations/[id]              admin+
+POST   /api/v1/companies/[slug]/invitations/[id]/resend       admin+
+
+GET    /api/v1/invitations/[token]                            público (landing)
+POST   /api/v1/invitations/[token]/accept                     público (cria sessão)
+
+GET    /api/v1/companies/[slug]/audit-log                     admin+</code></pre>
+
+      <h3 id="arq-schema">Schema atual</h3>
+      <pre><code>users                       (id, username, email, password, features[], timestamps)
+sessions                    (id, token, user_id, expires_at, timestamps)
+user_activation_tokens      (id, token, user_id, used_at, expires_at, timestamps)
+companies                   (id, name, slug UNIQUE, timestamps)
+memberships                 (id, user_id, company_id, role, timestamps)
+                              UNIQUE (user_id, company_id) + indexes em ambas FKs
+invitations                 (id, company_id, email, role, token UNIQUE, invited_by,
+                              expires_at, accepted_at, timestamps)
+audit_log                   (id, company_id, actor_id, action, target_type, target_id,
+                              metadata jsonb, created_at)
+                              INDEX (company_id, created_at DESC)</code></pre>
+      <p>
+        <strong>Sem FK constraints</strong> — convenção do projeto (espelhando automanews,
+        repositório de referência). Cascades são em código (ex: <code>deleteCompanyById</code> chama
+        <code>deleteMembershipsByCompany</code> antes do DELETE da company).
+      </p>
+
+      <hr />
+
+      <h2 id="proximos">Próximos passos</h2>
+      <p>
+        Roadmap derivado das issues abertas em GitHub. As marcações entre colchetes são os números
+        das issues — <code>gh issue view N</code> pra ver o escopo.
+      </p>
+
+      <h3 id="prox-imediato">Imediato — Semana 2 (Catálogos + Estoque)</h3>
+      <ol>
+        <li>
+          <strong>[#8]</strong> Endpoints administrativos para usuários — gerente consegue
+          listar/alterar membros, fora do contexto de convite (hoje só admin tem listagem; este é o
+          pré-requisito de qualquer tela admin).
+        </li>
+        <li>
+          <strong>[#9]</strong> Clientes, produtos e catálogo separador↔produto. Esta issue
+          desbloqueia <em>tudo</em>: é o primeiro modelo de negócio. Cria <code>clientes</code>,
+          <code>produtos</code>, <code>separadores_produtos</code> (catálogo por separador).
+          Adiciona <code>create:product</code>, <code>read:product</code>, etc. a
+          <code>ROLE_PERMISSIONS</code>.
+        </li>
+        <li>
+          <strong>[#10]</strong> Ledger de estoque + endpoints de movimentação.
+          <code>movimentacoes_estoque</code> com tipos
+          (<code>entrada</code>/<code>saida</code>/<code>estorno_cancelamento</code>); saldo é
+          <code>SUM(quantidade)</code>, nunca coluna materializada. Pesos em gramas inteiros,
+          dinheiro em centavos inteiros.
+        </li>
+      </ol>
+
+      <h3 id="prox-sem3">Semana 3 — Pedidos (núcleo do produto)</h3>
+      <ol>
+        <li>
+          <strong>[#11]</strong> Schema <code>pedidos</code> + <code>pedido_itens</code> + trigger
+          de <code>atualizado_em</code>.
+        </li>
+        <li>
+          <strong>[#12]</strong> Ciclo de vida completo do pedido (criação pelo vendedor, separação,
+          cancelamento).
+        </li>
+        <li><strong>[#13]</strong> Saldo previsto do separador + fluxo de entrega.</li>
+        <li><strong>[#14]</strong> Stream SSE de pedidos em tempo real (substitui polling).</li>
+        <li>
+          <strong>[#15]</strong> Tabela <code>logs_acao</code> + auditoria em ações críticas
+          (extensão do que está em <code>audit_log</code> hoje).
+        </li>
+      </ol>
+
+      <h3 id="prox-sem4">Semana 4 — Pagamentos + Telas + Deploy</h3>
+      <ol>
+        <li><strong>[#16]</strong> Modelo de pagamentos + endpoints.</li>
+        <li><strong>[#17]</strong> AppShell layout (sidebar, tabs por role).</li>
+        <li>
+          <strong>[#18]</strong> Página de login e telas do vendedor —
+          <span class="badge ok">parte já feita</span>.
+        </li>
+        <li><strong>[#19]</strong> Telas do separador (lista de pedidos atribuídos, etc.).</li>
+        <li><strong>[#20]</strong> Tela do entregador (rotas, baixa de entrega).</li>
+        <li><strong>[#21]</strong> Telas administrativas (catálogos, relatórios).</li>
+        <li>
+          <strong>[#22]</strong> Deploy em Vercel + Neon —
+          <span class="badge ok">já em produção</span>.
+        </li>
+      </ol>
+
+      <h3 id="prox-phase2">Phase 2 — pós-MVP</h3>
+      <ul>
+        <li><strong>[#23]</strong> Rate limit de login (5 falhas / 15min).</li>
+        <li><strong>[#24]</strong> Integração WhatsApp para notificações.</li>
+        <li><strong>[#25]</strong> Reconciliação automática de extrato bancário.</li>
+        <li><strong>[#26]</strong> Otimização de rota de entrega.</li>
+        <li>
+          <strong>[#27]</strong> <code>pg_cron</code> para limpeza de sessões e snapshots de
+          estoque.
+        </li>
+        <li><strong>[#28]</strong> LISTEN/NOTIFY em vez de polling.</li>
+        <li><strong>[#29]</strong> App nativo mobile.</li>
+      </ul>
+
+      <hr />
+
+      <h2 id="dev">Como rodar localmente</h2>
+      <pre><code>git clone https://github.com/joaohenriquecosta/sacola.git
+cd sacola
+cp .env.example .env.development     # já vem com defaults dev-ready
+npm ci
+npm run dev                          # sobe Postgres + mailpit + Next, roda migrations</code></pre>
+      <p>
+        Em <code>http://localhost:3000</code> a aplicação roda igual à produção, com email capturado
+        em <code>http://localhost:8025</code> (mailpit web UI). Testes:
+      </p>
+      <pre><code>npm test                # full suite (sobe Docker + Next, espera prontidão)
+npm run test:watch      # watch mode
+npm run lint && npm run format:check && npm run typecheck</code></pre>
+      <p>
+        Detalhes de deploy em <code>DEPLOY.md</code>. Convenções de migration em
+        <code>infra/migrations.md</code>. PRs sempre passam por CI completo + Vercel preview antes
+        de merge em <code>main</code>.
+      </p>
+    </main>
+
+    <footer>
+      <p>
+        Sacola · MIT ·
+        <a href="https://github.com/joaohenriquecosta/sacola" target="_blank">GitHub</a>
+      </p>
+    </footer>
+  </body>
+</html>
