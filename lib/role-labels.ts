@@ -6,9 +6,11 @@
 import type { Role } from "@/lib/roles";
 
 export const ROLE_LABEL_PT_BR: Record<Role, string> = {
-  // Generic — match the org-control concepts.
+  // Generic — match the org-control concepts. "Administrador" disambiguates
+  // from the Sacola job role "Gerente" below; both were rendering as
+  // "Gerente" in the invite dropdown, which was confusing.
   owner: "Dono",
-  admin: "Gerente",
+  admin: "Administrador",
   member: "Membro",
 
   // Sacola job roles.
@@ -21,7 +23,8 @@ export const ROLE_LABEL_PT_BR: Record<Role, string> = {
 // Short description shown in dropdowns / tooltips alongside the label.
 export const ROLE_DESCRIPTION_PT_BR: Record<Role, string> = {
   owner: "Controle total da empresa.",
-  admin: "Gerencia equipe e configurações; não pode excluir a empresa.",
+  admin:
+    "Gerencia equipe e configurações; não pode excluir a empresa nem alterar outros administradores.",
   member: "Acesso de leitura; sem ações de gerenciamento.",
   gerente: "Gerencia equipe, produtos, estoque e pedidos da operação.",
   vendedor: "Recebe pedidos via WhatsApp e registra na operação.",

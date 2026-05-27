@@ -8,9 +8,9 @@ import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { roleLabel } from "@/lib/role-labels";
+import { canEditMember, isManagementRole, type Role } from "@/lib/roles";
 import { loadCurrentUser } from "infra/controller";
 import { NotFoundError } from "infra/errors";
-import { type Role } from "models/authorization";
 import { getCompanyBySlug } from "models/company";
 import { listInvitationsByCompany } from "models/invitation";
 import { getMembership, listMembersByCompany } from "models/membership";
@@ -40,7 +40,7 @@ export default async function EquipePage({ params }: { params: Params }) {
   const myMembership = await getMembership(user.id, company.id);
   if (!myMembership) notFound();
 
-  const canManage = myMembership.role === "owner" || myMembership.role === "admin";
+  const canManage = isManagementRole(myMembership.role);
   const members = await listMembersByCompany(company.id);
   const invitations = canManage ? await listInvitationsByCompany(company.id) : [];
 
@@ -78,7 +78,12 @@ export default async function EquipePage({ params }: { params: Params }) {
               username={m.username}
               role={m.role}
               roleLabel={roleLabel(m.role as Role)}
-              canManage={canManage && m.role !== "owner" && m.user_id !== user.id}
+              features={m.features}
+              canManage={canEditMember({
+                callerRole: myMembership.role,
+                targetRole: m.role,
+                isSelf: m.user_id === user.id,
+              })}
             />
           ))}
         </CardContent>

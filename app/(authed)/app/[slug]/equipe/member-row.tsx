@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { ROLE_LABEL_PT_BR } from "@/lib/role-labels";
-import { ASSIGNABLE_ROLES, type Role } from "@/lib/roles";
+import { type Role } from "@/lib/roles";
+import { EditMemberDialog } from "./edit-member-dialog";
 
 export function MemberRow({
   slug,
@@ -13,6 +13,7 @@ export function MemberRow({
   username,
   role,
   roleLabel,
+  features,
   canManage,
 }: {
   slug: string;
@@ -20,25 +21,11 @@ export function MemberRow({
   username: string;
   role: Role;
   roleLabel: string;
+  features: string[];
   canManage: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-
-  async function changeRole(next: Role) {
-    if (next === role) return;
-    setBusy(true);
-    try {
-      await fetch(`/api/v1/companies/${slug}/members/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: next }),
-      });
-      router.refresh();
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function remove() {
     if (!confirm(`Remover ${username} da empresa?`)) return;
@@ -52,32 +39,24 @@ export function MemberRow({
   }
 
   return (
-    <div className="border-border flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-      <div>
-        <p className="font-medium">{username}</p>
-        {!canManage && <p className="text-muted-foreground text-xs">{roleLabel}</p>}
+    <div className="border-border flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm">
+      <div className="min-w-0">
+        <p className="truncate font-medium">{username}</p>
+        <p className="text-muted-foreground text-xs">{roleLabel}</p>
       </div>
-      {canManage ? (
-        <div className="flex items-center gap-2">
-          <select
-            value={role}
-            onChange={(e) => changeRole(e.target.value as Role)}
-            disabled={busy}
-            aria-label={`Função de ${username}`}
-            className="border-input bg-transparent text-foreground h-8 rounded-md border px-2 text-xs"
-          >
-            {ASSIGNABLE_ROLES.map((r) => (
-              <option key={r} value={r}>
-                {ROLE_LABEL_PT_BR[r]}
-              </option>
-            ))}
-          </select>
+      {canManage && (
+        <div className="flex shrink-0 items-center gap-2">
+          <EditMemberDialog
+            slug={slug}
+            userId={userId}
+            username={username}
+            role={role}
+            features={features}
+          />
           <Button variant="destructive" size="sm" disabled={busy} onClick={remove}>
             Remover
           </Button>
         </div>
-      ) : (
-        <span className="text-muted-foreground text-xs">{roleLabel}</span>
       )}
     </div>
   );
