@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-
-type Role = "owner" | "admin" | "member";
+import { ROLE_LABEL_PT_BR } from "@/lib/role-labels";
+import { ASSIGNABLE_ROLES, type Role } from "models/authorization";
 
 export function MemberRow({
   slug,
@@ -25,7 +25,8 @@ export function MemberRow({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
-  async function changeRole(next: "admin" | "member") {
+  async function changeRole(next: Role) {
+    if (next === role) return;
     setBusy(true);
     try {
       await fetch(`/api/v1/companies/${slug}/members/${userId}`, {
@@ -51,32 +52,32 @@ export function MemberRow({
   }
 
   return (
-    <div className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+    <div className="border-border flex items-center justify-between rounded-md border px-3 py-2 text-sm">
       <div>
         <p className="font-medium">{username}</p>
-        <p className="text-muted-foreground text-xs">{roleLabel}</p>
+        {!canManage && <p className="text-muted-foreground text-xs">{roleLabel}</p>}
       </div>
-      {canManage && (
+      {canManage ? (
         <div className="flex items-center gap-2">
-          {role !== "admin" && (
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => changeRole("admin")}>
-              Promover
-            </Button>
-          )}
-          {role === "admin" && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={busy}
-              onClick={() => changeRole("member")}
-            >
-              Rebaixar
-            </Button>
-          )}
+          <select
+            value={role}
+            onChange={(e) => changeRole(e.target.value as Role)}
+            disabled={busy}
+            aria-label={`Função de ${username}`}
+            className="border-input bg-transparent text-foreground h-8 rounded-md border px-2 text-xs"
+          >
+            {ASSIGNABLE_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {ROLE_LABEL_PT_BR[r]}
+              </option>
+            ))}
+          </select>
           <Button variant="destructive" size="sm" disabled={busy} onClick={remove}>
             Remover
           </Button>
         </div>
+      ) : (
+        <span className="text-muted-foreground text-xs">{roleLabel}</span>
       )}
     </div>
   );

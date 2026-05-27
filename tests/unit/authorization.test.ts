@@ -1,5 +1,13 @@
 import { InternalServerError } from "infra/errors";
-import { PERMISSIONS, filterOutput, isAuthorized } from "models/authorization";
+import {
+  ASSIGNABLE_ROLES,
+  PERMISSIONS,
+  ROLES,
+  ROLE_PERMISSIONS,
+  filterOutput,
+  isAuthorized,
+  isValidRole,
+} from "models/authorization";
 
 const anonymous = { id: null, features: PERMISSIONS.default.anonymousUser };
 const alice = {
@@ -58,6 +66,43 @@ describe("isAuthorized", () => {
 
   test("scoped feature requires companyId or resource.company_id", async () => {
     await expect(isAuthorized(alice, "read:company")).rejects.toBeInstanceOf(InternalServerError);
+  });
+});
+
+describe("Role catalog", () => {
+  test("ROLES is closed under ROLE_PERMISSIONS", () => {
+    expect([...ROLES].sort()).toEqual(Object.keys(ROLE_PERMISSIONS).sort());
+  });
+
+  test("ASSIGNABLE_ROLES excludes owner (assigned implicitly / via transfer)", () => {
+    expect(ASSIGNABLE_ROLES).not.toContain("owner");
+    expect(ASSIGNABLE_ROLES.length).toBe(ROLES.length - 1);
+  });
+
+  test("isValidRole accepts known roles and rejects strangers", () => {
+    expect(isValidRole("gerente")).toBe(true);
+    expect(isValidRole("entregador")).toBe(true);
+    expect(isValidRole("anonymousUser")).toBe(false); // not a role
+    expect(isValidRole(42)).toBe(false);
+    expect(isValidRole(undefined)).toBe(false);
+  });
+
+  test("owner is the only role that holds delete:company", () => {
+    for (const role of ROLES) {
+      const hasDelete = (ROLE_PERMISSIONS[role] as readonly string[]).includes("delete:company");
+      expect(hasDelete).toBe(role === "owner");
+    }
+  });
+
+  test("gerente has the same scoped permission set as admin (today)", () => {
+    expect([...ROLE_PERMISSIONS.gerente].sort()).toEqual([...ROLE_PERMISSIONS.admin].sort());
+  });
+
+  test("vendedor/separador/entregador share the member baseline (today)", () => {
+    const baseline = [...ROLE_PERMISSIONS.member].sort();
+    expect([...ROLE_PERMISSIONS.vendedor].sort()).toEqual(baseline);
+    expect([...ROLE_PERMISSIONS.separador].sort()).toEqual(baseline);
+    expect([...ROLE_PERMISSIONS.entregador].sort()).toEqual(baseline);
   });
 });
 

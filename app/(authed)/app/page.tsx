@@ -7,14 +7,10 @@ import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { roleLabel } from "@/lib/role-labels";
 import { loadCurrentUser } from "infra/controller";
+import { type Role } from "models/authorization";
 import { listCompaniesForUser } from "models/company";
-
-const ROLE_LABEL: Record<string, string> = {
-  owner: "Dono",
-  admin: "Gerente",
-  member: "Membro",
-};
 
 export default async function AppPage() {
   const { user } = await loadCurrentUser();
@@ -48,7 +44,7 @@ export default async function AppPage() {
                 <Card className="hover:border-foreground/30 transition-colors">
                   <CardHeader>
                     <CardTitle>{c.name}</CardTitle>
-                    <CardDescription>{ROLE_LABEL[c.role] ?? c.role}</CardDescription>
+                    <CardDescription>{roleLabel(c.role as Role)}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground text-sm">/{c.slug}</p>

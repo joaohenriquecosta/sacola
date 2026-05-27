@@ -7,13 +7,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ROLE_DESCRIPTION_PT_BR, ROLE_LABEL_PT_BR } from "@/lib/role-labels";
+import { ASSIGNABLE_ROLES, type Role } from "models/authorization";
 
 type FieldError = { message: string; action?: string };
 
 export function InviteForm({ slug }: { slug: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "member">("member");
+  const [role, setRole] = useState<Role>("member");
   const [error, setError] = useState<FieldError | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -60,18 +62,22 @@ export function InviteForm({ slug }: { slug: string }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="role">Permissão</Label>
+        <Label htmlFor="role">Função</Label>
         <select
           id="role"
           name="role"
           value={role}
-          onChange={(e) => setRole(e.target.value as "admin" | "member")}
+          onChange={(e) => setRole(e.target.value as Role)}
           disabled={loading}
           className="border-input bg-transparent text-foreground h-9 w-full rounded-md border px-2.5 text-sm shadow-xs"
         >
-          <option value="member">Membro (visualização)</option>
-          <option value="admin">Gerente (gerencia equipe e configurações)</option>
+          {ASSIGNABLE_ROLES.map((r) => (
+            <option key={r} value={r}>
+              {ROLE_LABEL_PT_BR[r]}
+            </option>
+          ))}
         </select>
+        <p className="text-muted-foreground text-xs">{ROLE_DESCRIPTION_PT_BR[role]}</p>
       </div>
 
       {error && (

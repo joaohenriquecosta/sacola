@@ -7,19 +7,15 @@ import { notFound, redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { roleLabel } from "@/lib/role-labels";
 import { loadCurrentUser } from "infra/controller";
 import { NotFoundError } from "infra/errors";
+import { type Role } from "models/authorization";
 import { getCompanyBySlug } from "models/company";
 import { listInvitationsByCompany } from "models/invitation";
 import { getMembership, listMembersByCompany } from "models/membership";
 import { MemberRow } from "./member-row";
 import { InvitationRow } from "./invitation-row";
-
-const ROLE_LABEL: Record<string, string> = {
-  owner: "Dono",
-  admin: "Gerente",
-  member: "Membro",
-};
 
 type Params = Promise<{ slug: string }>;
 
@@ -81,7 +77,7 @@ export default async function EquipePage({ params }: { params: Params }) {
               userId={m.user_id}
               username={m.username}
               role={m.role}
-              roleLabel={ROLE_LABEL[m.role] ?? m.role}
+              roleLabel={roleLabel(m.role as Role)}
               canManage={canManage && m.role !== "owner" && m.user_id !== user.id}
             />
           ))}
@@ -107,7 +103,7 @@ export default async function EquipePage({ params }: { params: Params }) {
                   id={inv.id}
                   email={inv.email}
                   role={inv.role}
-                  roleLabel={ROLE_LABEL[inv.role] ?? inv.role}
+                  roleLabel={roleLabel(inv.role as Role)}
                   expiresAt={dateFormatter.format(new Date(inv.expires_at))}
                 />
               ))}
