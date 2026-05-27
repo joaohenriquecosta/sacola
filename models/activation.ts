@@ -11,11 +11,18 @@
 import { randomBytes } from "node:crypto";
 
 import { query } from "infra/database";
-import { ForbiddenError, ValidationError } from "infra/errors";
+import { ForbiddenError, NotFoundError, ValidationError } from "infra/errors";
 import { sendMail } from "infra/mailer";
 import { getOrigin } from "infra/webserver";
 import { PERMISSIONS, isAuthorized } from "models/authorization";
-import { CreateUserInput, createUser, deleteUserById, getUserById, type User } from "models/user";
+import {
+  CreateUserInput,
+  createUser,
+  deleteUserById,
+  getUserByEmail,
+  getUserById,
+  type User,
+} from "models/user";
 
 export type ActivationToken = {
   id: string;
@@ -46,6 +53,34 @@ export async function registerUser(input: CreateUserInput): Promise<User> {
     throw error;
   }
   return user;
+}
+
+// Re-issue an activation link for a user who missed the original 15-minute
+// window. Anti-enumeration: the caller never learns whether the email is on
+// file or already activated — only the activatedUser-with-this-email path
+// silently succeeds; everything else also returns void without an error.
+//
+// Existing pending tokens for the user are deleted before a new one is issued
+// so a forwarded old email can't be used after the user requested a fresh one.
+export async function resendActivationEmail(email: unknown): Promise<void> {
+  if (typeof email !== "string" || !email.includes("@")) return;
+
+  let user: User;
+  try {
+    user = await getUserByEmail(email.trim());
+  } catch (error) {
+    if (error instanceof NotFoundError) return; // anti-enum: silent
+    throw error;
+  }
+
+  // Already activated → noop. If we sent a token here a logged-out attacker
+  // who knows the email could trigger phishing fodder; the user has nothing
+  // to gain either.
+  const isUnactivated = user.features.length === 1 && user.features[0] === "read:activation_token";
+  if (!isUnactivated) return;
+
+  await deleteActivationTokensByUserId(user.id);
+  await sendActivationEmail(user);
 }
 
 export async function sendActivationEmail(user: User): Promise<ActivationToken> {

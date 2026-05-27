@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 
+import { ResendActivationButton } from "@/components/resend-activation-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,11 @@ export default async function AguardandoAtivacaoPage({
             <Button variant="outline" asChild className="w-full">
               <Link href="/login">Já ativei, ir para o login</Link>
             </Button>
+            {email && (
+              <div className="text-center">
+                <ResendActivationButton email={email} variant="outline" />
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>

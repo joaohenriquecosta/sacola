@@ -122,6 +122,52 @@ export async function deleteInvitationById(id: string): Promise<void> {
   await query({ text: `DELETE FROM invitations WHERE id = $1;`, values: [id] });
 }
 
+// Reissue a pending invitation: rotate the token (so forwarded copies of the
+// old email stop working), bump expires_at, and send the email again. Already
+// accepted invitations 400 — there's no work to do, and resending would be a
+// surprise for the user who already joined.
+export async function resendInvitation(id: string): Promise<Invitation> {
+  const existing = await getInvitationById(id);
+  if (existing.accepted_at) {
+    throw new ValidationError({
+      message: "Este convite já foi aceito.",
+      action: "Não é necessário reenviar.",
+    });
+  }
+
+  const newToken = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + INVITATION_LIFETIME_MS);
+  const rotated = await rotateInvitationTokenQuery(id, newToken, expiresAt);
+
+  try {
+    await sendInvitationEmail(rotated);
+  } catch (error) {
+    // Don't unwind the rotation — the user explicitly asked us to resend.
+    // If the email fails, they can try again; the new token is still valid.
+    throw error;
+  }
+  return rotated;
+}
+
+async function rotateInvitationTokenQuery(
+  id: string,
+  token: string,
+  expiresAt: Date,
+): Promise<Invitation> {
+  const result = await query<Invitation>({
+    text: `
+      UPDATE invitations
+      SET token = $2,
+          expires_at = $3,
+          updated_at = timezone('utc', now())
+      WHERE id = $1
+      RETURNING *
+    ;`,
+    values: [id, token, expiresAt],
+  });
+  return result.rows[0];
+}
+
 export async function getPublicInvitationView(token: string): Promise<PublicInvitationView> {
   const invitation = await getValidInvitationByTokenStrict(token);
   const company = await getCompanyById(invitation.company_id);
