@@ -11,12 +11,12 @@ import { getOrderById } from "models/order";
 import { deletePayment, getPaymentById } from "models/payment";
 
 type RouteContext = {
-  params: Promise<{ slug: string; id: string; paymentId: string }>;
+  params: Promise<{ slug: string; id: string; payment_id: string }>;
 };
 
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
-    const { slug, id, paymentId } = await context.params;
+    const { slug, id, payment_id } = await context.params;
     const company = await getCompanyBySlug(slug);
     const { user } = await canRequest("delete:payment", { companyId: company.id });
     if (!user) throw new AuthenticationError();
@@ -26,7 +26,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       throw new NotFoundError({ message: "Pedido não encontrado." });
     }
 
-    const payment = await getPaymentById(paymentId);
+    const payment = await getPaymentById(payment_id);
     if (payment.order_id !== order.id || payment.company_id !== company.id) {
       throw new NotFoundError({ message: "Pagamento não encontrado." });
     }
