@@ -41,6 +41,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       companyId: company.id,
       email: body?.email,
       role: body?.role,
+      features: Array.isArray(body?.features) ? body.features : undefined,
       invitedBy: user.id,
     });
     await logSafe({
@@ -49,13 +50,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
       action: "invitation.created",
       targetType: "invitation",
       targetId: invitation.id,
-      metadata: { email: invitation.email, role: invitation.role },
+      metadata: {
+        email: invitation.email,
+        role: invitation.role,
+        features: invitation.features,
+      },
     });
     return NextResponse.json(
       {
         id: invitation.id,
         email: invitation.email,
         role: invitation.role,
+        features: invitation.features,
         expires_at: invitation.expires_at,
         created_at: invitation.created_at,
       },
