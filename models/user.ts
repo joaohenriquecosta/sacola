@@ -23,6 +23,11 @@ export type CreateUserInput = {
   username: string;
   email: string;
   password: string;
+  // When true, the new user is created with `activatedUser` features and skips
+  // the email-activation flow. Used by the invitation acceptance path: clicking
+  // the invite link proves the invitee owns the email, so a separate
+  // verification email would be redundant.
+  preActivated?: boolean;
 };
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,32}$/;
@@ -37,11 +42,15 @@ export async function createUser(input: CreateUserInput): Promise<User> {
   await assertUsernameAvailable(input.username);
   await assertEmailAvailable(input.email);
 
-  const withFeatures = {
-    ...input,
-    features: [...PERMISSIONS.default.unactivatedUser],
-  };
-  const secured = await hashObjectPassword(withFeatures);
+  const features = input.preActivated
+    ? [...PERMISSIONS.default.activatedUser]
+    : [...PERMISSIONS.default.unactivatedUser];
+  const secured = await hashObjectPassword({
+    username: input.username,
+    email: input.email,
+    password: input.password,
+    features,
+  });
 
   return await insertUserQuery(secured);
 }
