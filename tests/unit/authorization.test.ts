@@ -12,41 +12,52 @@ const bob = {
 };
 
 describe("isAuthorized", () => {
-  test("grants features the user has", () => {
-    expect(isAuthorized(alice, "create:session")).toBe(true);
-    expect(isAuthorized(alice, "read:session")).toBe(true);
+  test("grants features the user has", async () => {
+    expect(await isAuthorized(alice, "create:session")).toBe(true);
+    expect(await isAuthorized(alice, "read:session")).toBe(true);
   });
 
-  test("denies features the user does not have", () => {
-    expect(isAuthorized(alice, "read:user")).toBe(false);
-    expect(isAuthorized(anonymous, "read:user:self")).toBe(false);
+  test("denies features the user does not have", async () => {
+    expect(await isAuthorized(alice, "read:user")).toBe(false);
+    expect(await isAuthorized(anonymous, "read:user:self")).toBe(false);
   });
 
-  test("anonymous user can create:user and create:session", () => {
-    expect(isAuthorized(anonymous, "create:user")).toBe(true);
-    expect(isAuthorized(anonymous, "create:session")).toBe(true);
+  test("anonymous user can create:user and create:session", async () => {
+    expect(await isAuthorized(anonymous, "create:user")).toBe(true);
+    expect(await isAuthorized(anonymous, "create:session")).toBe(true);
   });
 
-  test("update:user allows the user to update themselves", () => {
-    expect(isAuthorized(alice, "update:user", { id: alice.id })).toBe(true);
+  test("activated user can create:company", async () => {
+    expect(await isAuthorized(alice, "create:company")).toBe(true);
+    expect(await isAuthorized(anonymous, "create:company")).toBe(false);
   });
 
-  test("update:user denies updating another user", () => {
-    expect(isAuthorized(alice, "update:user", { id: bob.id })).toBe(false);
+  test("update:user allows the user to update themselves", async () => {
+    expect(await isAuthorized(alice, "update:user", { resource: { id: alice.id } })).toBe(true);
   });
 
-  test("update:user without a resource is denied", () => {
-    expect(isAuthorized(alice, "update:user")).toBe(false);
+  test("update:user denies updating another user", async () => {
+    expect(await isAuthorized(alice, "update:user", { resource: { id: bob.id } })).toBe(false);
   });
 
-  test("throws InternalServerError for unknown features", () => {
-    expect(() => isAuthorized(alice, "delete:universe")).toThrow(InternalServerError);
+  test("update:user without a resource is denied", async () => {
+    expect(await isAuthorized(alice, "update:user")).toBe(false);
   });
 
-  test("throws InternalServerError when user has no features", () => {
-    expect(() =>
+  test("throws InternalServerError for unknown features", async () => {
+    await expect(isAuthorized(alice, "delete:universe")).rejects.toBeInstanceOf(
+      InternalServerError,
+    );
+  });
+
+  test("throws InternalServerError when user has no features", async () => {
+    await expect(
       isAuthorized({ id: alice.id, features: undefined as unknown as string[] }, "read:status"),
-    ).toThrow(InternalServerError);
+    ).rejects.toBeInstanceOf(InternalServerError);
+  });
+
+  test("scoped feature requires companyId or resource.company_id", async () => {
+    await expect(isAuthorized(alice, "read:company")).rejects.toBeInstanceOf(InternalServerError);
   });
 });
 

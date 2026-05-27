@@ -21,7 +21,12 @@ import {
   ServiceError,
   ValidationError,
 } from "infra/errors";
-import { AuthorizedUser, PERMISSIONS, isAuthorized } from "models/authorization";
+import {
+  AuthorizationScope,
+  AuthorizedUser,
+  PERMISSIONS,
+  isAuthorized,
+} from "models/authorization";
 import { Session, getValidSessionByToken } from "models/session";
 import { PublicUser, getUserById, serializePublicUser } from "models/user";
 
@@ -108,7 +113,7 @@ export async function loadCurrentUser(): Promise<LoadedContext> {
 
 export async function canRequest(
   feature: string,
-  resource?: { id?: string | null } | null,
+  scope: AuthorizationScope = {},
 ): Promise<LoadedContext> {
   const context = await loadCurrentUser();
   const authUser: AuthorizedUser = context.user ?? {
@@ -116,7 +121,7 @@ export async function canRequest(
     features: PERMISSIONS.default.anonymousUser,
   };
 
-  if (!isAuthorized(authUser, feature, resource ?? undefined)) {
+  if (!(await isAuthorized(authUser, feature, scope))) {
     throw new ForbiddenError({
       cause: new Error(`Missing feature \`${feature}\``),
       message: "Você não possui permissão para executar esta ação.",

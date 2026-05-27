@@ -22,7 +22,7 @@ export type Session = {
 
 export async function createSession(userId: string): Promise<Session> {
   const user = await getUserById(userId);
-  if (!isAuthorized(user, "create:session")) {
+  if (!(await isAuthorized(user, "create:session"))) {
     // Unactivated users have features = ["read:activation_token"] only. Tell
     // them where to look — but only the login route reaches this point with a
     // verified password, so revealing activation status is gated on knowing
