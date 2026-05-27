@@ -20,4 +20,8 @@ jobs:
 
       - run: npm ci
 
+      # .env.development is gitignored (it ends up holding per-dev secrets
+      # locally). Bootstrap from the committed dev-ready defaults.
+      - run: cp .env.example .env.development
+
       - run: npm test
