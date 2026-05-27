@@ -1,7 +1,7 @@
 // Labels pt-BR + paletas pra status de pedido. Mantido aqui (pure) pra
 // client components consumirem sem puxar DB.
 
-import type { OrderStatus } from "models/order";
+import type { OrderStatus } from "@/lib/order-status";
 
 export const ORDER_STATUS_LABEL_PT_BR: Record<OrderStatus, string> = {
   criado: "Criado",

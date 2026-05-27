@@ -9,8 +9,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { ORDER_STATUSES, type OrderStatus } from "models/order";
 import { ORDER_STATUS_LABEL_PT_BR } from "@/lib/order-labels";
+import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 
 type Props = {
   slug: string;

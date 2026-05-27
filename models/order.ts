@@ -9,13 +9,13 @@
 
 import { query } from "infra/database";
 import { NotFoundError, ValidationError } from "infra/errors";
+import { ORDER_STATUSES, isValidOrderStatus, type OrderStatus } from "@/lib/order-status";
 
-export const ORDER_STATUSES = ["criado", "separado", "entregue", "cancelado"] as const;
-export type OrderStatus = (typeof ORDER_STATUSES)[number];
-
-export function isValidOrderStatus(value: unknown): value is OrderStatus {
-  return typeof value === "string" && (ORDER_STATUSES as readonly string[]).includes(value);
-}
+// Re-export pra callers existentes do model não precisarem mudar import.
+// Client components devem importar direto de @/lib/order-status pra evitar
+// puxar a DB layer pro bundle do browser.
+export { ORDER_STATUSES, isValidOrderStatus };
+export type { OrderStatus };
 
 export type OrderItem = {
   id: string;
