@@ -73,3 +73,125 @@ export function isValidRole(value: unknown): value is Role {
 }
 
 export const SCOPED_FEATURES: ReadonlySet<string> = new Set(Object.values(ROLE_PERMISSIONS).flat());
+
+// Management roles — these hold company management permissions out of the
+// box. Used by `canEditMember` to decide who can edit whom: an admin/gerente
+// can't edit another management-level membership; only the owner can.
+const MANAGEMENT_ROLES: ReadonlySet<Role> = new Set<Role>(["owner", "admin", "gerente"]);
+
+export function isManagementRole(role: Role): boolean {
+  return MANAGEMENT_ROLES.has(role);
+}
+
+// Authorization rule for "can the caller edit/remove this member's
+// permissions?". Pure, side-effect free, sync — usable from both client
+// (to gate UI) and server (to gate the API).
+//
+//   owner: can touch anyone but themselves
+//   admin/gerente: can touch any non-management member
+//   member/vendedor/separador/entregador: never
+export function canEditMember(input: {
+  callerRole: Role;
+  targetRole: Role;
+  isSelf: boolean;
+}): boolean {
+  if (input.isSelf) return false;
+  if (input.callerRole === "owner") return input.targetRole !== "owner";
+  if (input.callerRole === "admin" || input.callerRole === "gerente") {
+    return !isManagementRole(input.targetRole);
+  }
+  return false;
+}
+
+// Features the UI can put behind a granular checkbox. `delete:company` is
+// owner-only and granted/revoked only through the transfer-ownership flow;
+// exposing it here would let an admin slip themselves the destruction
+// primitive without going through the explicit handoff.
+export const ASSIGNABLE_FEATURES: readonly string[] = [
+  "read:company",
+  "update:company",
+  "read:member",
+  "update:member",
+  "delete:member",
+  "read:invitation",
+  "create:invitation",
+  "delete:invitation",
+  "read:audit_log",
+] as const;
+
+// Permission groups for the granular editor. Each feature can declare a
+// dependency on a "read:*" feature in the same group; the UI uses these to
+// cascade selections (turning on a write turns on its read; turning off a
+// read turns off its dependent writes). Same shape used on server-side
+// validation so a malformed payload can't sneak through.
+export type FeatureGroup = {
+  id: string;
+  label: string;
+  features: readonly { id: string; label: string; requires?: readonly string[] }[];
+};
+
+export const FEATURE_GROUPS: readonly FeatureGroup[] = [
+  {
+    id: "company",
+    label: "Empresa",
+    features: [
+      { id: "read:company", label: "Ver detalhes da empresa" },
+      { id: "update:company", label: "Editar nome e slug", requires: ["read:company"] },
+    ],
+  },
+  {
+    id: "members",
+    label: "Membros",
+    features: [
+      { id: "read:member", label: "Ver lista de membros" },
+      { id: "update:member", label: "Editar permissões de membros", requires: ["read:member"] },
+      { id: "delete:member", label: "Remover membros", requires: ["read:member"] },
+    ],
+  },
+  {
+    id: "invitations",
+    label: "Convites",
+    features: [
+      { id: "read:invitation", label: "Ver convites pendentes" },
+      { id: "create:invitation", label: "Enviar convites", requires: ["read:invitation"] },
+      { id: "delete:invitation", label: "Revogar convites", requires: ["read:invitation"] },
+    ],
+  },
+  {
+    id: "audit",
+    label: "Auditoria",
+    features: [{ id: "read:audit_log", label: "Ver log de auditoria" }],
+  },
+] as const;
+
+// Normalize a candidate feature set: keep only assignable ones, then close
+// the set under their dependencies (a write implies its read). Server uses
+// this on PATCH bodies so an invalid client can't store a half-broken set.
+export function sanitizeFeatures(candidate: readonly string[]): string[] {
+  const allowed = new Set(ASSIGNABLE_FEATURES);
+  const reqs = new Map<string, readonly string[]>();
+  for (const group of FEATURE_GROUPS) {
+    for (const f of group.features) {
+      if (f.requires) reqs.set(f.id, f.requires);
+    }
+  }
+  const result = new Set<string>();
+  for (const f of candidate) {
+    if (allowed.has(f)) result.add(f);
+  }
+  // Close under dependencies.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const f of result) {
+      const deps = reqs.get(f) ?? [];
+      for (const d of deps) {
+        if (!result.has(d)) {
+          result.add(d);
+          changed = true;
+        }
+      }
+    }
+  }
+  return [...result];
+}

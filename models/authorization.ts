@@ -111,8 +111,9 @@ export async function isAuthorized(
     }
     const membership = await getMembership(user.id, companyId);
     if (!membership) return false;
-    if (!isValidRole(membership.role)) return false;
-    return (ROLE_PERMISSIONS[membership.role] as readonly string[]).includes(feature);
+    // Source of truth: per-membership features (set on creation from
+    // ROLE_PERMISSIONS[role] and freely edited via the granular UI).
+    return membership.features.includes(feature);
   }
 
   return user.features.includes(feature);

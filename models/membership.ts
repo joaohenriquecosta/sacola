@@ -1,16 +1,25 @@
-// Memberships connect a user to a company with a role. Permission checks on
-// company-scoped features (see models/authorization.ts:ROLE_PERMISSIONS) read
-// `role` from here. UNIQUE(user_id, company_id) enforces one role per pair.
+// Memberships connect a user to a company with a role + an explicit feature
+// list. UNIQUE(user_id, company_id) enforces one membership per pair.
+//
+// `role` is the named preset (display label, ownership marker). `features`
+// is the source of truth for scoped permission checks — it lets an admin
+// give one member custom permissions without touching the role.
+//
+// On create: features = ROLE_PERMISSIONS[role] (copied, not aliased).
+// On role change via updateMembershipRole: both are rewritten — role-based
+// presets reset the granular state. updateMembershipFeatures keeps the role
+// and only rewrites features, for granular edits.
 
 import { query } from "infra/database";
 import { ValidationError } from "infra/errors";
-import { ROLES, type Role, isValidRole } from "models/authorization";
+import { ROLE_PERMISSIONS, ROLES, isValidRole, type Role } from "@/lib/roles";
 
 export type Membership = {
   id: string;
   user_id: string;
   company_id: string;
   role: Role;
+  features: string[];
   created_at: Date;
   updated_at: Date;
 };
@@ -26,13 +35,14 @@ export async function createMembership(input: {
   role: Role;
 }): Promise<Membership> {
   validateRole(input.role);
+  const features = [...ROLE_PERMISSIONS[input.role]];
   const result = await query<Membership>({
     text: `
-      INSERT INTO memberships (user_id, company_id, role)
-      VALUES ($1, $2, $3)
+      INSERT INTO memberships (user_id, company_id, role, features)
+      VALUES ($1, $2, $3, $4)
       RETURNING *
     ;`,
-    values: [input.userId, input.companyId, input.role],
+    values: [input.userId, input.companyId, input.role, features],
   });
   return result.rows[0];
 }
@@ -54,7 +64,7 @@ export async function listMembersByCompany(companyId: string): Promise<MemberVie
   const result = await query<MemberView>({
     text: `
       SELECT
-        m.id, m.user_id, m.company_id, m.role, m.created_at, m.updated_at,
+        m.id, m.user_id, m.company_id, m.role, m.features, m.created_at, m.updated_at,
         u.username
       FROM memberships m
       JOIN users u ON u.id = m.user_id
@@ -79,17 +89,39 @@ export async function listMembershipsByUser(userId: string): Promise<Membership[
   return result.rows;
 }
 
+// Switch to a named preset: both role and features get rewritten.
 export async function updateMembershipRole(id: string, role: Role): Promise<Membership> {
   validateRole(role);
+  const features = [...ROLE_PERMISSIONS[role]];
   const result = await query<Membership>({
     text: `
       UPDATE memberships
       SET role = $2,
+          features = $3,
           updated_at = timezone('utc', now())
       WHERE id = $1
       RETURNING *
     ;`,
-    values: [id, role],
+    values: [id, role, features],
+  });
+  return result.rows[0];
+}
+
+// Granular edit: role stays, features get the new list verbatim. Caller is
+// expected to have sanitized the list (lib/roles.ts:sanitizeFeatures).
+export async function updateMembershipFeatures(
+  id: string,
+  features: string[],
+): Promise<Membership> {
+  const result = await query<Membership>({
+    text: `
+      UPDATE memberships
+      SET features = $2,
+          updated_at = timezone('utc', now())
+      WHERE id = $1
+      RETURNING *
+    ;`,
+    values: [id, features],
   });
   return result.rows[0];
 }
@@ -98,9 +130,19 @@ export async function deleteMembership(id: string): Promise<void> {
   await query({ text: `DELETE FROM memberships WHERE id = $1;`, values: [id] });
 }
 
+export async function deleteMembershipsByCompany(companyId: string): Promise<void> {
+  await query({
+    text: `DELETE FROM memberships WHERE company_id = $1;`,
+    values: [companyId],
+  });
+}
+
 // Atomic ownership swap: the current owner becomes admin, a chosen member
-// becomes owner. Two updates in sequence (no DB transaction — the project
-// uses client-per-query); we compensate by reverting the first update if the
+// becomes owner. Each role change also rewrites features (preset semantics),
+// so the demoted owner loses `delete:company` and the new owner gains it.
+//
+// Two updates in sequence (no DB transaction — the project uses
+// client-per-query); we compensate by reverting the first update if the
 // second fails so we never leave the company without an owner.
 //
 // Caller MUST verify:
@@ -148,13 +190,6 @@ export async function transferOwnership(input: {
     await updateMembershipRole(current.id, "owner").catch(() => {});
     throw error;
   }
-}
-
-export async function deleteMembershipsByCompany(companyId: string): Promise<void> {
-  await query({
-    text: `DELETE FROM memberships WHERE company_id = $1;`,
-    values: [companyId],
-  });
 }
 
 function validateRole(role: unknown): asserts role is Role {

@@ -1,17 +1,28 @@
 // PATCH/DELETE the membership of a specific user inside a company.
 //
-// Owner protection: the owner can't be demoted or removed via this endpoint.
-// To "transfer ownership" we'd need a dedicated flow that promotes a new
-// owner atomically — out of scope for MVP.
+// PATCH accepts either form:
+//   { role: Role }       — preset switch: rewrites both role and features
+//                          to ROLE_PERMISSIONS[role]
+//   { features: string[] } — granular: keeps role, replaces features with
+//                          the sanitized set (dependencies closed)
+//
+// "Can edit who" rule lives in @/lib/roles:canEditMember — owner edits
+// anyone but themselves; admin/gerente edit only non-management; nobody
+// can promote a member to owner via PATCH (transfer flow only).
 
 import { NextRequest, NextResponse } from "next/server";
 
 import { canRequest, errorToResponse } from "infra/controller";
 import { AuthenticationError, ForbiddenError, NotFoundError, ValidationError } from "infra/errors";
+import { canEditMember, isValidRole, sanitizeFeatures } from "@/lib/roles";
 import { logSafe } from "models/audit-log";
-import { isValidRole } from "models/authorization";
 import { getCompanyBySlug } from "models/company";
-import { deleteMembership, getMembership, updateMembershipRole } from "models/membership";
+import {
+  deleteMembership,
+  getMembership,
+  updateMembershipFeatures,
+  updateMembershipRole,
+} from "models/membership";
 
 type RouteContext = { params: Promise<{ slug: string; user_id: string }> };
 
@@ -24,18 +35,56 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const target = await getMembership(user_id, company.id);
     if (!target) throw new NotFoundError({ message: "Membro não encontrado." });
-    if (target.role === "owner") {
+
+    const callerMembership = await getMembership(user.id, company.id);
+    if (!callerMembership)
+      throw new ForbiddenError({ message: "Você não é membro desta empresa." });
+
+    const allowed = canEditMember({
+      callerRole: callerMembership.role,
+      targetRole: target.role,
+      isSelf: target.user_id === user.id,
+    });
+    if (!allowed) {
       throw new ForbiddenError({
-        message: "Não é possível alterar a role do dono da empresa.",
-        action: "Transfira a propriedade primeiro.",
+        message: "Você não pode editar este membro.",
+        action: "Apenas o dono edita administradores; administradores editam membros comuns.",
       });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
+
+    // Branch on what the client sent.
+    if (Array.isArray(body?.features)) {
+      const next = sanitizeFeatures(body.features);
+      const updated = await updateMembershipFeatures(target.id, next);
+      await logSafe({
+        companyId: company.id,
+        actorId: user.id,
+        action: "member.features_changed",
+        targetType: "membership",
+        targetId: target.id,
+        metadata: {
+          member_user_id: target.user_id,
+          old_features: target.features,
+          new_features: updated.features,
+        },
+      });
+      return NextResponse.json({
+        id: updated.id,
+        user_id: updated.user_id,
+        company_id: updated.company_id,
+        role: updated.role,
+        features: updated.features,
+        updated_at: updated.updated_at,
+      });
+    }
+
+    // Role preset switch.
     if (!isValidRole(body?.role)) {
       throw new ValidationError({
-        message: "Role inválida.",
-        action: "Use uma role válida.",
+        message: "Envie role ou features.",
+        action: "Use { role: '...' } para um preset ou { features: [...] } para granular.",
       });
     }
     if (body.role === "owner") {
@@ -63,6 +112,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       user_id: updated.user_id,
       company_id: updated.company_id,
       role: updated.role,
+      features: updated.features,
       updated_at: updated.updated_at,
     });
   } catch (err) {
@@ -89,10 +139,20 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     const target = await getMembership(user_id, company.id);
     if (!target) throw new NotFoundError({ message: "Membro não encontrado." });
-    if (target.role === "owner") {
+
+    const callerMembership = await getMembership(user.id, company.id);
+    if (!callerMembership)
+      throw new ForbiddenError({ message: "Você não é membro desta empresa." });
+
+    const allowed = canEditMember({
+      callerRole: callerMembership.role,
+      targetRole: target.role,
+      isSelf: false,
+    });
+    if (!allowed) {
       throw new ForbiddenError({
-        message: "Não é possível remover o dono da empresa.",
-        action: "Transfira a propriedade primeiro.",
+        message: "Você não pode remover este membro.",
+        action: "Administradores só removem membros comuns.",
       });
     }
 
