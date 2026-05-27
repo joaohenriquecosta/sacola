@@ -98,19 +98,23 @@ describe("Role catalog", () => {
     expect([...ROLE_PERMISSIONS.gerente].sort()).toEqual([...ROLE_PERMISSIONS.admin].sort());
   });
 
-  test("separador/entregador share the member baseline (today)", () => {
-    const baseline = [...ROLE_PERMISSIONS.member].sort();
-    expect([...ROLE_PERMISSIONS.separador].sort()).toEqual(baseline);
-    expect([...ROLE_PERMISSIONS.entregador].sort()).toEqual(baseline);
+  test("separador/entregador extend the baseline with update:order (operacional)", () => {
+    const member: readonly string[] = ROLE_PERMISSIONS.member;
+    for (const role of ["separador", "entregador"] as const) {
+      const features: readonly string[] = ROLE_PERMISSIONS[role];
+      const extra = features.filter((f) => !member.includes(f)).sort();
+      expect(extra).toEqual(["update:order"]);
+    }
   });
 
-  test("vendedor extends the member baseline with client create/update", () => {
-    // Vendedor é front-line: cadastra/atualiza cliente durante atendimento.
-    // Não recebe delete:client — limpeza de cadastro é do gerente.
+  test("vendedor extends the baseline with cliente create/update e order create", () => {
+    // Vendedor é front-line: cadastra/atualiza cliente + abre pedido durante
+    // o atendimento. Não recebe delete:client nem update:order (transição
+    // de status é da operação).
     const vendedor: readonly string[] = ROLE_PERMISSIONS.vendedor;
     const member: readonly string[] = ROLE_PERMISSIONS.member;
     const extra = vendedor.filter((f) => !member.includes(f)).sort();
-    expect(extra).toEqual(["create:client", "update:client"]);
+    expect(extra).toEqual(["create:client", "create:order", "update:client"]);
   });
 });
 

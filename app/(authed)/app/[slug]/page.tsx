@@ -14,6 +14,7 @@ import { loadCurrentUser } from "infra/controller";
 import { listClientsByCompany } from "models/client";
 import { getCompanyBySlug } from "models/company";
 import { getMembership, listMembersByCompany } from "models/membership";
+import { listOrdersByCompany } from "models/order";
 import { listProductsByCompany } from "models/product";
 
 type Params = Promise<{ slug: string }>;
@@ -37,9 +38,11 @@ export default async function CompanyPage({ params }: { params: Params }) {
   const canManage = isManagementRole(membership.role);
   const canSeeProducts = membership.features.includes("read:product");
   const canSeeClients = membership.features.includes("read:client");
+  const canSeeOrders = membership.features.includes("read:order");
   const members = await listMembersByCompany(company.id);
   const products = canSeeProducts ? await listProductsByCompany(company.id) : [];
   const clients = canSeeClients ? await listClientsByCompany(company.id) : [];
+  const orders = canSeeOrders ? await listOrdersByCompany(company.id) : [];
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -122,6 +125,26 @@ export default async function CompanyPage({ params }: { params: Params }) {
             <Button variant="outline" size="sm" asChild>
               <Link href={`/app/${company.slug}/clientes`}>
                 {membership.features.includes("create:client") ? "Gerenciar" : "Ver tudo"}
+              </Link>
+            </Button>
+          </CardHeader>
+        </Card>
+      )}
+
+      {canSeeOrders && (
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div>
+              <CardTitle>Pedidos</CardTitle>
+              <CardDescription>
+                {orders.length === 0
+                  ? "Nenhum pedido ainda."
+                  : `${orders.length} ${orders.length === 1 ? "pedido" : "pedidos"} no histórico.`}
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/app/${company.slug}/pedidos`}>
+                {membership.features.includes("create:order") ? "Gerenciar" : "Ver tudo"}
               </Link>
             </Button>
           </CardHeader>
