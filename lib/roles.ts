@@ -23,12 +23,28 @@ const COMPANY_MANAGEMENT_PERMISSIONS = [
   "create:product",
   "update:product",
   "delete:product",
+  // Client CRUD same shape.
+  "read:client",
+  "create:client",
+  "update:client",
+  "delete:client",
 ] as const;
 
 // "Read-only" today still means anyone who works inside the company can see
-// what's being sold. Vendedor/separador/entregador all need read:product to
-// do their jobs.
-const READ_ONLY_PERMISSIONS = ["read:company", "read:member", "read:product"] as const;
+// what's being sold and who the clients are. Vendedor/separador/entregador
+// all need read:product + read:client; vendedor diverges below to also
+// create/update clients mid-attendance.
+const READ_ONLY_PERMISSIONS = [
+  "read:company",
+  "read:member",
+  "read:product",
+  "read:client",
+] as const;
+
+// Vendedor é o único non-management que cadastra cliente: durante o
+// atendimento de pedido, é vendedor que abre uma ficha nova ou ajusta
+// o telefone. Não recebe delete:client — limpeza é trabalho do gerente.
+const VENDEDOR_EXTRA = ["create:client", "update:client"] as const;
 
 // Two tiers in the same catalog:
 //
@@ -49,7 +65,7 @@ export const ROLE_PERMISSIONS = {
   admin: [...COMPANY_MANAGEMENT_PERMISSIONS],
   member: [...READ_ONLY_PERMISSIONS],
   gerente: [...COMPANY_MANAGEMENT_PERMISSIONS],
-  vendedor: [...READ_ONLY_PERMISSIONS],
+  vendedor: [...READ_ONLY_PERMISSIONS, ...VENDEDOR_EXTRA],
   separador: [...READ_ONLY_PERMISSIONS],
   entregador: [...READ_ONLY_PERMISSIONS],
 } as const satisfies Record<string, readonly string[]>;
@@ -130,6 +146,10 @@ export const ASSIGNABLE_FEATURES: readonly string[] = [
   "create:product",
   "update:product",
   "delete:product",
+  "read:client",
+  "create:client",
+  "update:client",
+  "delete:client",
 ] as const;
 
 // Permission groups for the granular editor. Each feature can declare a
@@ -183,6 +203,16 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       { id: "create:product", label: "Cadastrar produtos", requires: ["read:product"] },
       { id: "update:product", label: "Editar produtos", requires: ["read:product"] },
       { id: "delete:product", label: "Remover produtos", requires: ["read:product"] },
+    ],
+  },
+  {
+    id: "clients",
+    label: "Clientes",
+    features: [
+      { id: "read:client", label: "Ver lista de clientes" },
+      { id: "create:client", label: "Cadastrar clientes", requires: ["read:client"] },
+      { id: "update:client", label: "Editar clientes", requires: ["read:client"] },
+      { id: "delete:client", label: "Remover clientes", requires: ["read:client"] },
     ],
   },
 ] as const;

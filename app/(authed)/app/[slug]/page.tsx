@@ -11,6 +11,7 @@ import { roleLabel } from "@/lib/role-labels";
 import { isManagementRole, type Role } from "@/lib/roles";
 import { NotFoundError } from "infra/errors";
 import { loadCurrentUser } from "infra/controller";
+import { listClientsByCompany } from "models/client";
 import { getCompanyBySlug } from "models/company";
 import { getMembership, listMembersByCompany } from "models/membership";
 import { listProductsByCompany } from "models/product";
@@ -35,8 +36,10 @@ export default async function CompanyPage({ params }: { params: Params }) {
 
   const canManage = isManagementRole(membership.role);
   const canSeeProducts = membership.features.includes("read:product");
+  const canSeeClients = membership.features.includes("read:client");
   const members = await listMembersByCompany(company.id);
   const products = canSeeProducts ? await listProductsByCompany(company.id) : [];
+  const clients = canSeeClients ? await listClientsByCompany(company.id) : [];
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -99,6 +102,26 @@ export default async function CompanyPage({ params }: { params: Params }) {
             <Button variant="outline" size="sm" asChild>
               <Link href={`/app/${company.slug}/produtos`}>
                 {membership.features.includes("create:product") ? "Gerenciar" : "Ver tudo"}
+              </Link>
+            </Button>
+          </CardHeader>
+        </Card>
+      )}
+
+      {canSeeClients && (
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div>
+              <CardTitle>Clientes</CardTitle>
+              <CardDescription>
+                {clients.length === 0
+                  ? "Nenhum cliente cadastrado."
+                  : `${clients.length} ${clients.length === 1 ? "cliente" : "clientes"} na carteira.`}
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/app/${company.slug}/clientes`}>
+                {membership.features.includes("create:client") ? "Gerenciar" : "Ver tudo"}
               </Link>
             </Button>
           </CardHeader>

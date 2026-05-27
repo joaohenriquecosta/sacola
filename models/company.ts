@@ -6,6 +6,7 @@
 import { query } from "infra/database";
 import { NotFoundError, ValidationError } from "infra/errors";
 import { SLUG_MAX_LENGTH, slugify } from "@/lib/slugify";
+import { deleteClientsByCompany } from "models/client";
 import { createMembership, deleteMembershipsByCompany } from "models/membership";
 import { deleteProductsByCompany } from "models/product";
 
@@ -149,6 +150,7 @@ export async function updateCompany(id: string, patch: UpdateCompanyInput): Prom
 // Deletes the company and cascades to memberships in application code (no FK
 // constraints on the schema — convention from the existing tables).
 export async function deleteCompanyById(id: string): Promise<void> {
+  await deleteClientsByCompany(id);
   await deleteProductsByCompany(id);
   await deleteMembershipsByCompany(id);
   await query({ text: `DELETE FROM companies WHERE id = $1;`, values: [id] });
