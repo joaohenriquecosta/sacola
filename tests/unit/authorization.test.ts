@@ -98,11 +98,19 @@ describe("Role catalog", () => {
     expect([...ROLE_PERMISSIONS.gerente].sort()).toEqual([...ROLE_PERMISSIONS.admin].sort());
   });
 
-  test("vendedor/separador/entregador share the member baseline (today)", () => {
+  test("separador/entregador share the member baseline (today)", () => {
     const baseline = [...ROLE_PERMISSIONS.member].sort();
-    expect([...ROLE_PERMISSIONS.vendedor].sort()).toEqual(baseline);
     expect([...ROLE_PERMISSIONS.separador].sort()).toEqual(baseline);
     expect([...ROLE_PERMISSIONS.entregador].sort()).toEqual(baseline);
+  });
+
+  test("vendedor extends the member baseline with client create/update", () => {
+    // Vendedor é front-line: cadastra/atualiza cliente durante atendimento.
+    // Não recebe delete:client — limpeza de cadastro é do gerente.
+    const vendedor: readonly string[] = ROLE_PERMISSIONS.vendedor;
+    const member: readonly string[] = ROLE_PERMISSIONS.member;
+    const extra = vendedor.filter((f) => !member.includes(f)).sort();
+    expect(extra).toEqual(["create:client", "update:client"]);
   });
 });
 

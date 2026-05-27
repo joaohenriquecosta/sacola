@@ -60,6 +60,12 @@ export function describeAuditEvent(event: {
       return `${actor} editou um produto.`;
     case "product.deleted":
       return `${actor} removeu o produto "${get(m, "name") ?? "sem nome"}".`;
+    case "client.created":
+      return `${actor} cadastrou o cliente "${get(m, "name") ?? "sem nome"}".`;
+    case "client.updated":
+      return `${actor} editou o cliente "${get(m, "name") ?? "sem nome"}".`;
+    case "client.deleted":
+      return `${actor} removeu o cliente "${get(m, "name") ?? "sem nome"}".`;
     default:
       return `${actor} executou ${event.action}.`;
   }
