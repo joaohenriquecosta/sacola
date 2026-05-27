@@ -60,7 +60,18 @@ export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const { slug, user_id } = await context.params;
     const company = await getCompanyBySlug(slug);
-    await canRequest("delete:member", { companyId: company.id });
+    const { user } = await canRequest("delete:member", { companyId: company.id });
+    if (!user) throw new ForbiddenError({ message: "Sessão necessária." });
+
+    if (user.id === user_id) {
+      // Self-removal goes through the dedicated /members/me path. Forcing
+      // the split keeps the permission stories separate: removing somebody
+      // else requires delete:member, leaving yourself doesn't.
+      throw new ForbiddenError({
+        message: "Use o caminho de sair da empresa para se remover.",
+        action: "DELETE /api/v1/companies/[slug]/members/me",
+      });
+    }
 
     const target = await getMembership(user_id, company.id);
     if (!target) throw new NotFoundError({ message: "Membro não encontrado." });

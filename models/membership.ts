@@ -98,6 +98,58 @@ export async function deleteMembership(id: string): Promise<void> {
   await query({ text: `DELETE FROM memberships WHERE id = $1;`, values: [id] });
 }
 
+// Atomic ownership swap: the current owner becomes admin, a chosen member
+// becomes owner. Two updates in sequence (no DB transaction — the project
+// uses client-per-query); we compensate by reverting the first update if the
+// second fails so we never leave the company without an owner.
+//
+// Caller MUST verify:
+//   - caller is the current owner of the company (delete:company permission)
+//   - target user is an existing member of the company
+//   - target is not already the owner (caller can't transfer to themselves)
+export async function transferOwnership(input: {
+  companyId: string;
+  currentOwnerUserId: string;
+  newOwnerUserId: string;
+}): Promise<{ newOwner: Membership; demotedOwner: Membership }> {
+  if (input.currentOwnerUserId === input.newOwnerUserId) {
+    throw new ValidationError({
+      message: "Não é possível transferir a propriedade para você mesmo.",
+      action: "Escolha outro membro.",
+    });
+  }
+
+  const target = await getMembership(input.newOwnerUserId, input.companyId);
+  if (!target) {
+    throw new ValidationError({
+      message: "O novo dono precisa ser um membro existente da empresa.",
+      action: "Convide a pessoa antes de transferir a propriedade.",
+    });
+  }
+
+  const current = await getMembership(input.currentOwnerUserId, input.companyId);
+  if (!current || current.role !== "owner") {
+    throw new ValidationError({
+      cause: new Error(
+        `Membership for ${input.currentOwnerUserId} in ${input.companyId} is not owner`,
+      ),
+      message: "Apenas o dono atual pode transferir a propriedade.",
+    });
+  }
+
+  const demotedOwner = await updateMembershipRole(current.id, "admin");
+  try {
+    const newOwner = await updateMembershipRole(target.id, "owner");
+    return { newOwner, demotedOwner };
+  } catch (error) {
+    // Revert: re-promote the original owner so the company never sits with
+    // zero owners (the most catastrophic state — nobody can delete it or
+    // transfer it out).
+    await updateMembershipRole(current.id, "owner").catch(() => {});
+    throw error;
+  }
+}
+
 export async function deleteMembershipsByCompany(companyId: string): Promise<void> {
   await query({
     text: `DELETE FROM memberships WHERE company_id = $1;`,

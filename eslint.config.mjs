@@ -11,7 +11,7 @@ const config = [
     },
   },
   {
-    ignores: [".next/**", "node_modules/**", "infra/migrations/**"],
+    ignores: [".next/**", ".vercel/**", "node_modules/**", "infra/migrations/**"],
   },
 ];
 

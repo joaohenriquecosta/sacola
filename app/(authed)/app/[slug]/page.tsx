@@ -44,11 +44,11 @@ export default async function CompanyPage({ params }: { params: Params }) {
             /{company.slug} · você é {roleLabel(membership.role as Role)}
           </p>
         </div>
-        {canManage && (
-          <Button variant="outline" asChild>
-            <Link href={`/app/${company.slug}/configuracoes`}>Configurações</Link>
-          </Button>
-        )}
+        <Button variant="outline" asChild>
+          <Link href={`/app/${company.slug}/configuracoes`}>
+            {canManage ? "Configurações" : "Sair da empresa"}
+          </Link>
+        </Button>
       </div>
 
       <Card>
