@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import "./globals.css";
 
 import { cn } from "@/lib/utils";
+import { LoadingBarProvider } from "@/components/loading-bar";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
@@ -22,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <LoadingBarProvider>{children}</LoadingBarProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -3,12 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Spinner } from "@/components/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-type FieldError = { message: string; action?: string };
+import { useFormSubmit, type ErrorPayload } from "@/lib/use-form-submit";
 
 export function AcceptInvitation({
   token,
@@ -24,43 +24,45 @@ export function AcceptInvitation({
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<FieldError | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<ErrorPayload | null>(null);
+  const { submit, isPending } = useFormSubmit();
+  const [requesting, setRequesting] = useState(false);
 
-  async function submit(body?: { username: string; password: string }) {
+  const busy = requesting || isPending;
+
+  async function trigger(body?: { username: string; password: string }) {
     setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/v1/invitations/${encodeURIComponent(token)}/accept`, {
-        method: "POST",
-        headers: body ? { "Content-Type": "application/json" } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      const responseBody = await res.json().catch(() => ({}));
-      if (res.status === 201) {
+    setRequesting(true);
+    const result = await submit<{ slug?: string; message?: string; action?: string }>({
+      request: async () => {
+        const res = await fetch(`/api/v1/invitations/${encodeURIComponent(token)}/accept`, {
+          method: "POST",
+          headers: body ? { "Content-Type": "application/json" } : undefined,
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        return { status: res.status, body: await res.json().catch(() => ({})) };
+      },
+      success: (s) => s === 201,
+      then: (responseBody) => {
         router.push(`/app/${responseBody.slug ?? redirectSlug}`);
         router.refresh();
-        return;
-      }
-      setError({
-        message: responseBody.message ?? "Não foi possível aceitar o convite.",
-        action: responseBody.action,
-      });
-    } catch {
-      setError({
-        message: "Não foi possível aceitar o convite.",
-        action: "Verifique sua conexão e tente novamente.",
-      });
-    } finally {
-      setLoading(false);
-    }
+      },
+    });
+    setRequesting(false);
+    if (!result.ok) setError(result.error);
   }
 
   if (mode === "accept") {
     return (
-      <div className="space-y-3">
-        <Button className="w-full" disabled={loading} onClick={() => submit()}>
-          {loading ? "Aceitando..." : `Aceitar como ${email}`}
+      <div className="space-y-3" aria-busy={busy}>
+        <Button className="w-full" disabled={busy} onClick={() => trigger()}>
+          {busy ? (
+            <>
+              <Spinner /> Aceitando…
+            </>
+          ) : (
+            `Aceitar como ${email}`
+          )}
         </Button>
         {error && (
           <Alert variant="destructive">
@@ -76,9 +78,10 @@ export function AcceptInvitation({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        submit({ username, password });
+        trigger({ username, password });
       }}
       className="space-y-4"
+      aria-busy={busy}
     >
       <p className="text-muted-foreground text-sm">
         Crie sua conta para aceitar o convite. O email <span className="font-medium">{email}</span>{" "}
@@ -96,7 +99,7 @@ export function AcceptInvitation({
           pattern="[A-Za-z0-9_]+"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          disabled={loading}
+          disabled={busy}
         />
       </div>
 
@@ -111,7 +114,7 @@ export function AcceptInvitation({
           minLength={12}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
+          disabled={busy}
         />
         <p className="text-muted-foreground text-xs">
           Mínimo 12 caracteres com pelo menos um caractere especial.
@@ -125,8 +128,14 @@ export function AcceptInvitation({
         </Alert>
       )}
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Criando..." : "Criar conta e aceitar"}
+      <Button type="submit" className="w-full" disabled={busy}>
+        {busy ? (
+          <>
+            <Spinner /> Criando…
+          </>
+        ) : (
+          "Criar conta e aceitar"
+        )}
       </Button>
     </form>
   );
