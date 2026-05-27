@@ -3,7 +3,7 @@
 // label change is one diff (and never causes "Membro" in one page and
 // "Member" in another).
 
-import type { Role } from "models/authorization";
+import type { Role } from "@/lib/roles";
 
 export const ROLE_LABEL_PT_BR: Record<Role, string> = {
   // Generic — match the org-control concepts.

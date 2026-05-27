@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ROLE_LABEL_PT_BR } from "@/lib/role-labels";
-import { ASSIGNABLE_ROLES, type Role } from "models/authorization";
+import { ASSIGNABLE_ROLES, type Role } from "@/lib/roles";
 
 export function MemberRow({
   slug,

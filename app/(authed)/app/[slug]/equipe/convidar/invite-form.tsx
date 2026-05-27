@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ROLE_DESCRIPTION_PT_BR, ROLE_LABEL_PT_BR } from "@/lib/role-labels";
-import { ASSIGNABLE_ROLES, type Role } from "models/authorization";
+import { ASSIGNABLE_ROLES, type Role } from "@/lib/roles";
 
 type FieldError = { message: string; action?: string };
 

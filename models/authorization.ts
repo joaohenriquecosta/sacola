@@ -7,8 +7,8 @@
 //    creating a company).
 //
 // 2) SCOPED features live in `ROLE_PERMISSIONS[role]`, keyed by the user's
-//    `memberships.role` in a given company. Used for everything that
-//    happens inside a company (members, invitations, products, orders, …).
+//    `memberships.role` in a given company. The role catalog (pure, no DB)
+//    is in `@/lib/roles`; this file does the runtime check.
 //
 // `isAuthorized` decides which layer applies by looking up the feature in
 // the catalogs:
@@ -21,7 +21,21 @@
 // global but resource-bound.
 
 import { ForbiddenError, InternalServerError } from "infra/errors";
+import {
+  ASSIGNABLE_ROLES,
+  ROLES,
+  ROLE_PERMISSIONS,
+  SCOPED_FEATURES,
+  isValidRole,
+  type Role,
+} from "@/lib/roles";
 import { getMembership } from "models/membership";
+
+// Re-export the catalog so route handlers + tests have one import path.
+// Client components MUST import from `@/lib/roles` directly to avoid pulling
+// the DB layer into the browser bundle.
+export { ASSIGNABLE_ROLES, ROLES, ROLE_PERMISSIONS, isValidRole };
+export type { Role };
 
 export const PERMISSIONS = {
   default: {
@@ -52,83 +66,6 @@ export const PERMISSIONS = {
     company: ["create:company"] as const,
   },
 } as const;
-
-// Roles are templates: each maps to the set of scoped features granted to
-// members holding that role in a company. Keep flat (no inheritance); to
-// promote/demote a user, just rewrite their membership.role.
-//
-// Two tiers coexist:
-//
-//   GENERIC roles — owner / admin / member — model org control. Any POP
-//   (procedimento operacional padrão) on top of sacola uses these for
-//   permission-management within a company.
-//
-//   SACOLA roles — gerente / vendedor / separador / entregador — model job
-//   functions in a hortifruti operation. They will gain product/order/stock
-//   permissions when those resources land (Semana 2-3 do roadmap); for now
-//   they alias the closest generic role, so inviting someone as "vendedor"
-//   today behaves the same as "member" but the label and the storage are
-//   already correct when business endpoints arrive.
-//
-// The catalog is intentionally explicit (no derive-from-base abstraction) so
-// any role change is one diff in this file. Avoid clever lookup tables.
-
-const COMPANY_MANAGEMENT_PERMISSIONS = [
-  "read:company",
-  "update:company",
-  "read:member",
-  "update:member",
-  "delete:member",
-  "read:invitation",
-  "create:invitation",
-  "delete:invitation",
-  "read:audit_log",
-] as const;
-
-const READ_ONLY_PERMISSIONS = ["read:company", "read:member"] as const;
-
-export const ROLE_PERMISSIONS = {
-  owner: [...COMPANY_MANAGEMENT_PERMISSIONS, "delete:company"],
-  admin: [...COMPANY_MANAGEMENT_PERMISSIONS],
-  member: [...READ_ONLY_PERMISSIONS],
-
-  // Sacola job roles. Same permission lists as the generic equivalents
-  // today — diverging as soon as products/orders/stock land.
-  gerente: [...COMPANY_MANAGEMENT_PERMISSIONS],
-  vendedor: [...READ_ONLY_PERMISSIONS],
-  separador: [...READ_ONLY_PERMISSIONS],
-  entregador: [...READ_ONLY_PERMISSIONS],
-} as const satisfies Record<string, readonly string[]>;
-
-export type Role = keyof typeof ROLE_PERMISSIONS;
-
-export const ROLES: readonly Role[] = [
-  "owner",
-  "admin",
-  "member",
-  "gerente",
-  "vendedor",
-  "separador",
-  "entregador",
-];
-
-// Roles a user (admin/owner) can assign via invite or role-change. Excludes
-// owner (assigned implicitly on company creation, transferred via a dedicated
-// flow).
-export const ASSIGNABLE_ROLES: readonly Role[] = [
-  "admin",
-  "member",
-  "gerente",
-  "vendedor",
-  "separador",
-  "entregador",
-];
-
-export function isValidRole(value: unknown): value is Role {
-  return typeof value === "string" && (ROLES as readonly string[]).includes(value);
-}
-
-const SCOPED_FEATURES = new Set<string>(Object.values(ROLE_PERMISSIONS).flat());
 
 export type AuthorizedUser = {
   id: string | null;
