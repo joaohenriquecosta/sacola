@@ -107,23 +107,25 @@ describe("Role catalog", () => {
     expect(extra).toEqual(["create:stock_movement", "transition:order:separar"]);
   });
 
-  test("entregador extends baseline com transition:order:entregar (operacional)", () => {
+  test("entregador extends baseline com transition:order:entregar + create:payment", () => {
+    // Entregador recebe pagamento na porta + marca como entregue.
     const member: readonly string[] = ROLE_PERMISSIONS.member;
     const features: readonly string[] = ROLE_PERMISSIONS.entregador;
     const extra = features.filter((f) => !member.includes(f)).sort();
-    expect(extra).toEqual(["transition:order:entregar"]);
+    expect(extra).toEqual(["create:payment", "transition:order:entregar"]);
   });
 
-  test("vendedor extends baseline com cliente create/update, order create + cancelar", () => {
+  test("vendedor extends baseline com cliente, order, cancelar + create:payment", () => {
     // Vendedor é front-line: cadastra/atualiza cliente + abre pedido +
-    // cancela próprio pedido. Não transita pra separado/entregue
-    // (operação) nem apaga cadastro (gerente).
+    // cancela próprio + recebe pagamento na hora. Não transita pra
+    // separado/entregue (operação) nem apaga cadastro (gerente).
     const vendedor: readonly string[] = ROLE_PERMISSIONS.vendedor;
     const member: readonly string[] = ROLE_PERMISSIONS.member;
     const extra = vendedor.filter((f) => !member.includes(f)).sort();
     expect(extra).toEqual([
       "create:client",
       "create:order",
+      "create:payment",
       "transition:order:cancelar",
       "update:client",
     ]);

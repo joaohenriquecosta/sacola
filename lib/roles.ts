@@ -43,11 +43,15 @@ const COMPANY_MANAGEMENT_PERMISSIONS = [
   "read:stock_movement",
   "create:stock_movement",
   "delete:stock_movement",
+  // Payments per pedido. delete = estorno (perigoso, owner/gerente).
+  "read:payment",
+  "create:payment",
+  "delete:payment",
 ] as const;
 
 // "Read-only" today still means anyone que trabalha na empresa vê
-// catálogo, clientes, pedidos e estoque. Vendedor/separador/entregador
-// divergem abaixo conforme a função na operação.
+// catálogo, clientes, pedidos, estoque e pagamentos. Vendedor/separador/
+// entregador divergem abaixo conforme a função na operação.
 const READ_ONLY_PERMISSIONS = [
   "read:company",
   "read:member",
@@ -55,24 +59,28 @@ const READ_ONLY_PERMISSIONS = [
   "read:client",
   "read:order",
   "read:stock_movement",
+  "read:payment",
 ] as const;
 
 // Vendedor: cadastra cliente + cria pedido durante atendimento; cancela
-// pedido próprio em caso de engano ou desistência do cliente. Não
-// transita pra separado/entregue (operação) nem apaga cadastro.
+// pedido próprio em caso de engano ou desistência do cliente; recebe
+// pagamento na hora (cliente paga via PIX no balcão). Não transita pra
+// separado/entregue (operação) nem apaga cadastro.
 const VENDEDOR_EXTRA = [
   "create:client",
   "update:client",
   "create:order",
   "transition:order:cancelar",
+  "create:payment",
 ] as const;
 
 // Separador: do criado vai pra separado + lança movimento de estoque
 // (saída ao separar, futuro: ajuste manual quando recontar bandeja).
 const SEPARADOR_EXTRA = ["transition:order:separar", "create:stock_movement"] as const;
 
-// Entregador: do separado vai pra entregue. Idem terminal.
-const ENTREGADOR_EXTRA = ["transition:order:entregar"] as const;
+// Entregador: do separado vai pra entregue + recebe pagamento na porta
+// (cliente paga em dinheiro/cartão móvel ao receber).
+const ENTREGADOR_EXTRA = ["transition:order:entregar", "create:payment"] as const;
 
 // Two tiers in the same catalog:
 //
@@ -187,6 +195,9 @@ export const ASSIGNABLE_FEATURES: readonly string[] = [
   "read:stock_movement",
   "create:stock_movement",
   "delete:stock_movement",
+  "read:payment",
+  "create:payment",
+  "delete:payment",
 ] as const;
 
 // Permission groups for the granular editor. Each feature can declare a
@@ -290,6 +301,23 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
         id: "delete:stock_movement",
         label: "Estornar movimento (apagar lançamento)",
         requires: ["read:stock_movement"],
+      },
+    ],
+  },
+  {
+    id: "payments",
+    label: "Pagamentos",
+    features: [
+      { id: "read:payment", label: "Ver pagamentos" },
+      {
+        id: "create:payment",
+        label: "Registrar pagamento recebido",
+        requires: ["read:payment"],
+      },
+      {
+        id: "delete:payment",
+        label: "Estornar pagamento",
+        requires: ["read:payment"],
       },
     ],
   },
