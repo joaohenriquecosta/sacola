@@ -8,16 +8,11 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { roleLabel } from "@/lib/role-labels";
 import { loadCurrentUser } from "infra/controller";
 import { ValidationError } from "infra/errors";
 import { getPublicInvitationView } from "models/invitation";
 import { AcceptInvitation } from "./accept-invitation";
-
-const ROLE_LABEL: Record<string, string> = {
-  owner: "Dono",
-  admin: "Gerente",
-  member: "Membro",
-};
 
 type Params = Promise<{ token: string }>;
 
@@ -66,7 +61,7 @@ export default async function ConvitePage({ params }: { params: Params }) {
             <span className="font-medium">{view.invited_by.username}</span> convidou{" "}
             <span className="font-medium">{view.email}</span> a entrar em{" "}
             <span className="font-medium">{view.company.name}</span> como{" "}
-            <span className="font-medium">{ROLE_LABEL[view.role] ?? view.role}</span>.
+            <span className="font-medium">{roleLabel(view.role)}</span>.
           </p>
 
           {isLoggedInMismatch && (

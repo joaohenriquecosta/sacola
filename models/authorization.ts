@@ -7,8 +7,8 @@
 //    creating a company).
 //
 // 2) SCOPED features live in `ROLE_PERMISSIONS[role]`, keyed by the user's
-//    `memberships.role` in a given company. Used for everything that
-//    happens inside a company (members, invitations, products, orders, …).
+//    `memberships.role` in a given company. The role catalog (pure, no DB)
+//    is in `@/lib/roles`; this file does the runtime check.
 //
 // `isAuthorized` decides which layer applies by looking up the feature in
 // the catalogs:
@@ -21,7 +21,21 @@
 // global but resource-bound.
 
 import { ForbiddenError, InternalServerError } from "infra/errors";
+import {
+  ASSIGNABLE_ROLES,
+  ROLES,
+  ROLE_PERMISSIONS,
+  SCOPED_FEATURES,
+  isValidRole,
+  type Role,
+} from "@/lib/roles";
 import { getMembership } from "models/membership";
+
+// Re-export the catalog so route handlers + tests have one import path.
+// Client components MUST import from `@/lib/roles` directly to avoid pulling
+// the DB layer into the browser bundle.
+export { ASSIGNABLE_ROLES, ROLES, ROLE_PERMISSIONS, isValidRole };
+export type { Role };
 
 export const PERMISSIONS = {
   default: {
@@ -52,47 +66,6 @@ export const PERMISSIONS = {
     company: ["create:company"] as const,
   },
 } as const;
-
-// Roles are templates: each maps to the set of scoped features granted to
-// members holding that role in a company. Keep flat (no inheritance); to
-// promote/demote a user, just rewrite their membership.role.
-//
-// Naming is intentionally generic so other POPs (procedimentos operacionais
-// padrão) can reuse the catalog. UI maps role IDs to domain-specific labels.
-export const ROLE_PERMISSIONS = {
-  owner: [
-    "read:company",
-    "update:company",
-    "delete:company",
-    "read:member",
-    "update:member",
-    "delete:member",
-    "read:invitation",
-    "create:invitation",
-    "delete:invitation",
-  ],
-  admin: [
-    "read:company",
-    "update:company",
-    "read:member",
-    "update:member",
-    "delete:member",
-    "read:invitation",
-    "create:invitation",
-    "delete:invitation",
-  ],
-  member: ["read:company", "read:member"],
-} as const satisfies Record<string, readonly string[]>;
-
-export type Role = keyof typeof ROLE_PERMISSIONS;
-
-export const ROLES: readonly Role[] = ["owner", "admin", "member"];
-
-export function isValidRole(value: unknown): value is Role {
-  return typeof value === "string" && (ROLES as readonly string[]).includes(value);
-}
-
-const SCOPED_FEATURES = new Set<string>(Object.values(ROLE_PERMISSIONS).flat());
 
 export type AuthorizedUser = {
   id: string | null;
