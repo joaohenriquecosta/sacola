@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 
 import { errorToResponse, loadCurrentUser } from "infra/controller";
 import { AuthenticationError, ForbiddenError } from "infra/errors";
+import { logSafe } from "models/audit-log";
 import { getCompanyBySlug } from "models/company";
 import { deleteMembership, getMembership } from "models/membership";
 
@@ -44,6 +45,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
     }
 
     await deleteMembership(membership.id);
+    await logSafe({
+      companyId: company.id,
+      actorId: user.id,
+      action: "member.left",
+      targetType: "membership",
+      targetId: membership.id,
+      metadata: { role: membership.role },
+    });
     return new NextResponse(null, { status: 204 });
   } catch (err) {
     return errorToResponse(err);

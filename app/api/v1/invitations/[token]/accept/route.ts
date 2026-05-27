@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { errorToResponse, loadCurrentUser, setSessionCookie } from "infra/controller";
 import { ValidationError } from "infra/errors";
+import { logSafe } from "models/audit-log";
 import { acceptInvitationWithExistingUser, registerAndAcceptInvitation } from "models/invitation";
 import { createSession } from "models/session";
 
@@ -25,7 +26,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { user } = await loadCurrentUser();
     let userId: string;
+    let companyId: string;
     let companySlug: string;
+    let role: string;
+    let via: "existing_user" | "register_and_accept";
 
     if (user) {
       const result = await acceptInvitationWithExistingUser(token, {
@@ -33,7 +37,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
         email: user.email,
       });
       userId = user.id;
+      companyId = result.company.id;
       companySlug = result.company.slug;
+      role = result.invitation.role;
+      via = "existing_user";
     } else {
       if (typeof body?.username !== "string" || typeof body?.password !== "string") {
         throw new ValidationError({
@@ -46,11 +53,24 @@ export async function POST(request: NextRequest, context: RouteContext) {
         password: body.password,
       });
       userId = result.user.id;
+      companyId = result.company.id;
       companySlug = result.company.slug;
+      role = result.invitation.role;
+      via = "register_and_accept";
     }
 
     const session = await createSession(userId);
     await setSessionCookie(session.token);
+
+    await logSafe({
+      companyId,
+      actorId: userId,
+      action: "member.joined",
+      targetType: "membership",
+      // No membership id surfaced from the accept helpers; targetId stays
+      // null and the actor + metadata are enough to trace.
+      metadata: { role, via },
+    });
 
     return NextResponse.json({ slug: companySlug }, { status: 201 });
   } catch (err) {

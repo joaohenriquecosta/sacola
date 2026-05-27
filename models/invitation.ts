@@ -202,7 +202,7 @@ export async function acceptInvitationWithExistingUser(
 export async function registerAndAcceptInvitation(
   token: string,
   input: { username: string; password: string },
-): Promise<{ user: User; company: Company }> {
+): Promise<{ user: User; company: Company; invitation: Invitation }> {
   const invitation = await getValidInvitationByTokenStrict(token);
   const company = await getCompanyById(invitation.company_id);
 
@@ -215,12 +215,12 @@ export async function registerAndAcceptInvitation(
   const user = await createUser(createInput);
   try {
     await createMembership({ userId: user.id, companyId: company.id, role: invitation.role });
-    await markInvitationAcceptedQuery(invitation.id);
+    const consumed = await markInvitationAcceptedQuery(invitation.id);
+    return { user, company, invitation: consumed };
   } catch (error) {
     await deleteUserById(user.id);
     throw error;
   }
-  return { user, company };
 }
 
 async function getValidInvitationByTokenStrict(token: string): Promise<Invitation> {

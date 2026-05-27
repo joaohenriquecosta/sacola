@@ -4,7 +4,8 @@
 import { NextResponse } from "next/server";
 
 import { canRequest, errorToResponse } from "infra/controller";
-import { ForbiddenError } from "infra/errors";
+import { AuthenticationError, ForbiddenError } from "infra/errors";
+import { logSafe } from "models/audit-log";
 import { getCompanyBySlug } from "models/company";
 import { getInvitationById, resendInvitation } from "models/invitation";
 
@@ -14,7 +15,8 @@ export async function POST(_request: Request, context: RouteContext) {
   try {
     const { slug, id } = await context.params;
     const company = await getCompanyBySlug(slug);
-    await canRequest("create:invitation", { companyId: company.id });
+    const { user } = await canRequest("create:invitation", { companyId: company.id });
+    if (!user) throw new AuthenticationError();
 
     // Same defense-in-depth check used by DELETE: the invitation must
     // belong to this company URL.
@@ -24,6 +26,14 @@ export async function POST(_request: Request, context: RouteContext) {
     }
 
     const resent = await resendInvitation(id);
+    await logSafe({
+      companyId: company.id,
+      actorId: user.id,
+      action: "invitation.resent",
+      targetType: "invitation",
+      targetId: resent.id,
+      metadata: { email: resent.email, role: resent.role },
+    });
     return NextResponse.json(
       {
         id: resent.id,

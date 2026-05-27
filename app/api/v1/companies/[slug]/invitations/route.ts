@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { canRequest, errorToResponse } from "infra/controller";
 import { AuthenticationError } from "infra/errors";
+import { logSafe } from "models/audit-log";
 import { getCompanyBySlug } from "models/company";
 import { createInvitation, listInvitationsByCompany } from "models/invitation";
 
@@ -41,6 +42,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
       email: body?.email,
       role: body?.role,
       invitedBy: user.id,
+    });
+    await logSafe({
+      companyId: company.id,
+      actorId: user.id,
+      action: "invitation.created",
+      targetType: "invitation",
+      targetId: invitation.id,
+      metadata: { email: invitation.email, role: invitation.role },
     });
     return NextResponse.json(
       {
