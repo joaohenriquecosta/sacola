@@ -8,6 +8,7 @@ import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCentsBRL } from "@/lib/format-money";
 import { ORDER_STATUS_BADGE_CLASS, ORDER_STATUS_LABEL_PT_BR } from "@/lib/order-labels";
+import { availableTransitions } from "@/lib/order-status";
 import { getClientById } from "models/client";
 import { getCompanyBySlug } from "models/company";
 import { getUserById } from "models/user";
@@ -57,7 +58,7 @@ export default async function PedidoDetailPage({ params }: { params: Params }) {
     getUserById(order.created_by).catch(() => null),
   ]);
 
-  const canUpdate = membership.features.includes("update:order");
+  const transitions = availableTransitions(order.status, membership.features);
   const canDelete = membership.features.includes("delete:order");
 
   return (
@@ -118,12 +119,11 @@ export default async function PedidoDetailPage({ params }: { params: Params }) {
         </CardContent>
       </Card>
 
-      {(canUpdate || canDelete) && (
+      {(transitions.length > 0 || canDelete) && (
         <OrderActions
           slug={company.slug}
           orderId={order.id}
-          status={order.status}
-          canUpdate={canUpdate}
+          availableTargets={transitions.map((t) => t.to)}
           canDelete={canDelete}
         />
       )}

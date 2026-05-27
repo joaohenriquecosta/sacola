@@ -247,8 +247,22 @@ describe("GET /orders + /orders/[id]", () => {
   });
 });
 
-describe("PATCH /orders/[id] (status)", () => {
-  test("Separador move pra separado", async () => {
+describe("PATCH /orders/[id] (transition matrix + per-transition features)", () => {
+  // firstOrderId começa em 'criado'.
+
+  test("Vendedor não pode separar (não tem transition:order:separar)", async () => {
+    const res = await fetch(
+      `${testBaseUrl}/api/v1/companies/${companySlug}/orders/${firstOrderId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: vendedorCookie },
+        body: JSON.stringify({ status: "separado" }),
+      },
+    );
+    expect(res.status).toBe(403);
+  });
+
+  test("Separador transita criado → separado", async () => {
     const res = await fetch(
       `${testBaseUrl}/api/v1/companies/${companySlug}/orders/${firstOrderId}`,
       {
@@ -261,16 +275,78 @@ describe("PATCH /orders/[id] (status)", () => {
     expect((await res.json()).status).toBe("separado");
   });
 
-  test("Vendedor não muda status (não tem update:order)", async () => {
+  test("Separador não pode entregar (transition exige feature do entregador)", async () => {
     const res = await fetch(
       `${testBaseUrl}/api/v1/companies/${companySlug}/orders/${firstOrderId}`,
       {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Cookie: vendedorCookie },
+        headers: { "Content-Type": "application/json", Cookie: separadorCookie },
         body: JSON.stringify({ status: "entregue" }),
       },
     );
     expect(res.status).toBe(403);
+  });
+
+  test("Owner entrega (management tem todas as transições)", async () => {
+    const res = await fetch(
+      `${testBaseUrl}/api/v1/companies/${companySlug}/orders/${firstOrderId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: ownerCookie },
+        body: JSON.stringify({ status: "entregue" }),
+      },
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).status).toBe("entregue");
+  });
+
+  test("Transição inválida (criado → entregue) → 400", async () => {
+    const create = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: vendedorCookie },
+      body: JSON.stringify({
+        client_id: clientId,
+        items: [{ product_id: productId, quantity: 1 }],
+      }),
+    });
+    const orderId = (await create.json()).id;
+    const res = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: ownerCookie },
+      body: JSON.stringify({ status: "entregue" }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("Vendedor cancela próprio pedido recém-criado", async () => {
+    const create = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: vendedorCookie },
+      body: JSON.stringify({
+        client_id: clientId,
+        items: [{ product_id: productId, quantity: 2 }],
+      }),
+    });
+    const orderId = (await create.json()).id;
+    const res = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: vendedorCookie },
+      body: JSON.stringify({ status: "cancelado" }),
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()).status).toBe("cancelado");
+  });
+
+  test("Tentar voltar pra criado → 400 (não é alvo de transição)", async () => {
+    const res = await fetch(
+      `${testBaseUrl}/api/v1/companies/${companySlug}/orders/${firstOrderId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: ownerCookie },
+        body: JSON.stringify({ status: "criado" }),
+      },
+    );
+    expect(res.status).toBe(400);
   });
 
   test("Status inválido → 400", async () => {

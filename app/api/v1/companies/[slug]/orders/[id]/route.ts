@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { canRequest, errorToResponse } from "infra/controller";
 import { AuthenticationError, NotFoundError, ValidationError } from "infra/errors";
+import { findTransition } from "@/lib/order-status";
 import { logSafe } from "models/audit-log";
 import { getCompanyBySlug } from "models/company";
 import { deleteOrderById, getOrderById, isValidOrderStatus, updateOrderStatus } from "models/order";
@@ -35,7 +36,24 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const { slug, id } = await context.params;
     const company = await getCompanyBySlug(slug);
-    const { user } = await canRequest("update:order", { companyId: company.id });
+    // Carregamos o pedido antes da autorização — precisamos do estado
+    // atual + alvo pra derivar a feature exigida e gatear nela.
+    const body = await request.json().catch(() => ({}));
+    if (!isValidOrderStatus(body?.status)) {
+      throw new ValidationError({
+        message: "Status inválido.",
+        action: "Use separado | entregue | cancelado (criado só na criação).",
+      });
+    }
+    const transition = findTransition(body.status);
+    if (!transition) {
+      throw new ValidationError({
+        message: "Esse estado não é alvo de transição.",
+        action: "criado é o estado inicial; um pedido novo nasce criado.",
+      });
+    }
+
+    const { user } = await canRequest(transition.feature, { companyId: company.id });
     if (!user) throw new AuthenticationError();
 
     const existing = await getOrderById(id);
@@ -43,15 +61,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       throw new NotFoundError({ message: "Pedido não encontrado." });
     }
 
-    const body = await request.json().catch(() => ({}));
-    if (!isValidOrderStatus(body?.status)) {
-      throw new ValidationError({
-        message: "Status inválido.",
-        action: "Use criado | separado | entregue | cancelado.",
-      });
-    }
-
-    const updated = await updateOrderStatus(id, body.status);
+    // Matrix enforcement: updateOrderStatus lança ValidationError se a
+    // transição não for válida a partir do estado atual.
+    const updated = await updateOrderStatus(id, existing.status, body.status);
     await logSafe({
       companyId: company.id,
       actorId: user.id,

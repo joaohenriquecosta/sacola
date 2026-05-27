@@ -1,26 +1,33 @@
 "use client";
 
-// Ações no detalhe de pedido. MVP: botões de transição livres (qualquer
-// um com update:order pode mover pra qualquer estado). PR de lifecycle
-// vai introduzir matriz de transições autorizadas por role-feature
-// específica.
+// Ações de pedido. O server (page.tsx) calcula `availableTargets` pela
+// interseção (matriz de transições válidas a partir do estado atual ×
+// features do membership). UI só renderiza o que o server liberou; o
+// próprio API faz o mesmo check, então um botão escondido continua 403
+// se chamado direto.
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ORDER_STATUS_LABEL_PT_BR } from "@/lib/order-labels";
-import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
+import type { OrderStatus } from "@/lib/order-status";
 
 type Props = {
   slug: string;
   orderId: string;
-  status: OrderStatus;
-  canUpdate: boolean;
+  availableTargets: readonly OrderStatus[];
   canDelete: boolean;
 };
 
-export function OrderActions({ slug, orderId, status, canUpdate, canDelete }: Props) {
+const ACTION_VERB: Record<OrderStatus, string> = {
+  criado: "Reabrir",
+  separado: "Marcar como separado",
+  entregue: "Marcar como entregue",
+  cancelado: "Cancelar pedido",
+};
+
+export function OrderActions({ slug, orderId, availableTargets, canDelete }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -47,9 +54,7 @@ export function OrderActions({ slug, orderId, status, canUpdate, canDelete }: Pr
     try {
       await fetch(
         `/api/v1/companies/${encodeURIComponent(slug)}/orders/${encodeURIComponent(orderId)}`,
-        {
-          method: "DELETE",
-        },
+        { method: "DELETE" },
       );
       router.push(`/app/${slug}/pedidos`);
       router.refresh();
@@ -60,17 +65,19 @@ export function OrderActions({ slug, orderId, status, canUpdate, canDelete }: Pr
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      {canUpdate ? (
-        <div className="flex flex-wrap gap-2">
-          {ORDER_STATUSES.filter((s) => s !== status).map((s) => (
-            <Button key={s} variant="outline" size="sm" disabled={busy} onClick={() => moveTo(s)}>
-              Marcar como {ORDER_STATUS_LABEL_PT_BR[s].toLowerCase()}
-            </Button>
-          ))}
-        </div>
-      ) : (
-        <div />
-      )}
+      <div className="flex flex-wrap gap-2">
+        {availableTargets.map((target) => (
+          <Button
+            key={target}
+            variant={target === "cancelado" ? "outline" : "default"}
+            size="sm"
+            disabled={busy}
+            onClick={() => moveTo(target)}
+          >
+            {ACTION_VERB[target] ?? `Marcar como ${ORDER_STATUS_LABEL_PT_BR[target].toLowerCase()}`}
+          </Button>
+        ))}
+      </div>
       {canDelete && (
         <Button variant="destructive" size="sm" disabled={busy} onClick={remove}>
           Excluir pedido
