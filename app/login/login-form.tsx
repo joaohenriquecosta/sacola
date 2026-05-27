@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ResendActivationButton } from "@/components/resend-activation-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +80,13 @@ export function LoginForm() {
           <AlertTitle>{error.message}</AlertTitle>
           {error.action && <AlertDescription>{error.action}</AlertDescription>}
         </Alert>
+      )}
+
+      {/* Activation-required error → offer to reissue the link. The error
+          message is the exact pt-BR string the API returns; we match on
+          "ativada" rather than parsing structured fields. */}
+      {error && /ativada/i.test(error.message) && (
+        <ResendActivationButton email={email} variant="outline" className="w-full" />
       )}
 
       <Button type="submit" className="w-full" disabled={loading}>
