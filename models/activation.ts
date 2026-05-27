@@ -67,7 +67,7 @@ export async function activateUserByToken(token: string): Promise<ActivationToke
   const activationToken = await getValidActivationTokenByToken(token);
   const targetUser = await getUserById(activationToken.user_id);
 
-  if (!isAuthorized(targetUser, "read:activation_token")) {
+  if (!(await isAuthorized(targetUser, "read:activation_token"))) {
     throw new ForbiddenError({
       cause: new Error(`User ${targetUser.id} cannot use activation tokens`),
       message: "Você não possui permissão para usar este token de ativação.",
