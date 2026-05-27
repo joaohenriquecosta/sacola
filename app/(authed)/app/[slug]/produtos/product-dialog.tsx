@@ -29,6 +29,7 @@ export type ProductDialogInitial = {
   id: string;
   name: string;
   priceCents: number;
+  costCents: number;
   unit: string;
 };
 
@@ -47,6 +48,11 @@ export function ProductDialog({ slug, trigger, initial }: Props) {
   const [priceText, setPriceText] = useState(
     initial ? (initial.priceCents / 100).toFixed(2).replace(".", ",") : "",
   );
+  // Cost defaults to empty when 0 (treat as "not informed") so the user
+  // sees a placeholder instead of a misleading "0,00".
+  const [costText, setCostText] = useState(
+    initial && initial.costCents > 0 ? (initial.costCents / 100).toFixed(2).replace(".", ",") : "",
+  );
   const [error, setError] = useState<ErrorPayload | null>(null);
   const { submit, isPending } = useFormSubmit();
   const [requesting, setRequesting] = useState(false);
@@ -58,6 +64,11 @@ export function ProductDialog({ slug, trigger, initial }: Props) {
     setName(initial?.name ?? "");
     setUnit(initial?.unit ?? "kg");
     setPriceText(initial ? (initial.priceCents / 100).toFixed(2).replace(".", ",") : "");
+    setCostText(
+      initial && initial.costCents > 0
+        ? (initial.costCents / 100).toFixed(2).replace(".", ",")
+        : "",
+    );
     setError(null);
   }
 
@@ -78,7 +89,20 @@ export function ProductDialog({ slug, trigger, initial }: Props) {
       return;
     }
 
-    const body = JSON.stringify({ name, price_cents: priceCents, unit });
+    // Cost is optional. Empty input → 0 ("não informado"); a typed value
+    // must parse, otherwise surface the same kind of error as price.
+    let costCents = 0;
+    if (costText.trim()) {
+      const parsed = parseBRLToCents(costText);
+      if (parsed === null) {
+        setError({ message: "Custo inválido.", action: 'Use o formato "8,50".' });
+        setRequesting(false);
+        return;
+      }
+      costCents = parsed;
+    }
+
+    const body = JSON.stringify({ name, price_cents: priceCents, cost_cents: costCents, unit });
     const url = isEditing
       ? `/api/v1/companies/${encodeURIComponent(slug)}/products/${encodeURIComponent(initial!.id)}`
       : `/api/v1/companies/${encodeURIComponent(slug)}/products`;
@@ -129,7 +153,7 @@ export function ProductDialog({ slug, trigger, initial }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="price">Preço (R$)</Label>
+              <Label htmlFor="price">Preço de venda (R$)</Label>
               <Input
                 id="price"
                 inputMode="decimal"
@@ -141,17 +165,29 @@ export function ProductDialog({ slug, trigger, initial }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="unit">Unidade</Label>
+              <Label htmlFor="cost">Custo (R$)</Label>
               <Input
-                id="unit"
-                required
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
+                id="cost"
+                inputMode="decimal"
+                value={costText}
+                onChange={(e) => setCostText(e.target.value)}
                 disabled={busy}
-                placeholder="kg / un / pacote"
-                maxLength={16}
+                placeholder="opcional"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="unit">Unidade</Label>
+            <Input
+              id="unit"
+              required
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              disabled={busy}
+              placeholder="kg / un / pacote"
+              maxLength={16}
+            />
           </div>
 
           {error && (
