@@ -11,12 +11,12 @@
 // malformed client can't write a half-broken set.
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
+import { PermissionCheckboxes } from "@/components/permission-checkboxes";
 import { Spinner } from "@/components/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -28,13 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ROLE_DESCRIPTION_PT_BR, ROLE_LABEL_PT_BR } from "@/lib/role-labels";
-import {
-  ASSIGNABLE_ROLES,
-  FEATURE_GROUPS,
-  ROLE_PERMISSIONS,
-  sanitizeFeatures,
-  type Role,
-} from "@/lib/roles";
+import { ASSIGNABLE_ROLES, ROLE_PERMISSIONS, sanitizeFeatures, type Role } from "@/lib/roles";
 import { useFormSubmit, type ErrorPayload } from "@/lib/use-form-submit";
 
 type Props = {
@@ -49,58 +43,21 @@ export function EditMemberDialog({ slug, userId, username, role, features }: Pro
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pickedRole, setPickedRole] = useState<Role>(role);
-  const [picked, setPicked] = useState<Set<string>>(() => new Set(features));
+  const [picked, setPicked] = useState<string[]>(() => [...features]);
   const [error, setError] = useState<ErrorPayload | null>(null);
   const { submit, isPending } = useFormSubmit();
   const [requesting, setRequesting] = useState(false);
   const busy = requesting || isPending;
 
-  // Build a quick map of feature → dependents for cascade-uncheck. The
-  // "requires" relationship is stored on the dependent in FEATURE_GROUPS;
-  // we invert it here once.
-  const dependents = useMemo(() => {
-    const map = new Map<string, string[]>();
-    for (const group of FEATURE_GROUPS) {
-      for (const f of group.features) {
-        for (const req of f.requires ?? []) {
-          const list = map.get(req) ?? [];
-          list.push(f.id);
-          map.set(req, list);
-        }
-      }
-    }
-    return map;
-  }, []);
-
-  function toggle(featureId: string, checked: boolean) {
-    setPicked((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(featureId);
-        // Cascade-on: enable required reads automatically.
-        for (const group of FEATURE_GROUPS) {
-          const f = group.features.find((x) => x.id === featureId);
-          if (f?.requires) for (const r of f.requires) next.add(r);
-        }
-      } else {
-        next.delete(featureId);
-        // Cascade-off: dependent writes go off when their read does.
-        const dropList = dependents.get(featureId) ?? [];
-        for (const d of dropList) next.delete(d);
-      }
-      return next;
-    });
-  }
-
   function applyPreset(target: Role) {
     setPickedRole(target);
-    setPicked(new Set(ROLE_PERMISSIONS[target] as readonly string[]));
+    setPicked([...(ROLE_PERMISSIONS[target] as readonly string[])]);
   }
 
   async function onSave() {
     setError(null);
     setRequesting(true);
-    const next = sanitizeFeatures([...picked]);
+    const next = sanitizeFeatures(picked);
     const result = await submit<{ message?: string; action?: string }>({
       request: async () => {
         const res = await fetch(
@@ -126,7 +83,7 @@ export function EditMemberDialog({ slug, userId, username, role, features }: Pro
     if (!next) {
       // Reset on close so the next open shows the current persisted state.
       setPickedRole(role);
-      setPicked(new Set(features));
+      setPicked([...features]);
       setError(null);
     }
     setOpen(next);
@@ -167,32 +124,7 @@ export function EditMemberDialog({ slug, userId, username, role, features }: Pro
             <p className="text-muted-foreground text-xs">{ROLE_DESCRIPTION_PT_BR[pickedRole]}</p>
           </div>
 
-          <div className="space-y-4">
-            {FEATURE_GROUPS.map((group) => (
-              <fieldset key={group.id} className="space-y-2">
-                <legend className="text-foreground text-sm font-medium">{group.label}</legend>
-                <div className="space-y-1.5">
-                  {group.features.map((f) => {
-                    const checked = picked.has(f.id);
-                    return (
-                      <label
-                        key={f.id}
-                        className="flex items-start gap-2 text-sm cursor-pointer select-none"
-                      >
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={(v) => toggle(f.id, Boolean(v))}
-                          disabled={busy}
-                          className="mt-0.5"
-                        />
-                        <span>{f.label}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            ))}
-          </div>
+          <PermissionCheckboxes value={picked} onChange={setPicked} disabled={busy} />
 
           {error && (
             <Alert variant="destructive">

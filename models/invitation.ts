@@ -23,7 +23,7 @@ import { query } from "infra/database";
 import { ForbiddenError, NotFoundError, ValidationError } from "infra/errors";
 import { sendMail } from "infra/mailer";
 import { getOrigin } from "infra/webserver";
-import { ROLES, isValidRole, type Role } from "models/authorization";
+import { ROLE_PERMISSIONS, ROLES, isValidRole, sanitizeFeatures, type Role } from "@/lib/roles";
 import { getCompanyById, type Company } from "models/company";
 import { createMembership, getMembership } from "models/membership";
 import {
@@ -39,6 +39,10 @@ export type Invitation = {
   company_id: string;
   email: string;
   role: Role;
+  // Snapshot of the features the inviter chose. Defaults to the role preset
+  // (ROLE_PERMISSIONS[role]) when the inviter doesn't customize. The accept
+  // path writes this verbatim into the resulting membership.
+  features: string[];
   token: string;
   invited_by: string;
   expires_at: Date;
@@ -66,11 +70,19 @@ export async function createInvitation(input: {
   email: string;
   role: Role;
   invitedBy: string;
+  // Optional granular override. When omitted, ROLE_PERMISSIONS[role] is used.
+  // sanitizeFeatures closes the dependency set and drops anything outside
+  // the assignable list (e.g. delete:company).
+  features?: readonly string[];
 }): Promise<Invitation> {
   const email = normalizeEmail(input.email);
   validateRole(input.role);
   await assertNoActiveInvitation(input.companyId, email);
   await assertNotAlreadyMember(input.companyId, email);
+
+  const features = input.features
+    ? sanitizeFeatures(input.features)
+    : [...ROLE_PERMISSIONS[input.role]];
 
   const tokenValue = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + INVITATION_LIFETIME_MS);
@@ -78,6 +90,7 @@ export async function createInvitation(input: {
     companyId: input.companyId,
     email,
     role: input.role,
+    features,
     token: tokenValue,
     invitedBy: input.invitedBy,
     expiresAt,
@@ -190,7 +203,7 @@ export async function acceptInvitationWithExistingUser(
   const invitation = await getValidInvitationByTokenStrict(token);
   assertEmailMatches(invitation.email, user.email);
   const company = await getCompanyById(invitation.company_id);
-  await ensureMembership(user.id, company.id, invitation.role);
+  await ensureMembership(user.id, company.id, invitation.role, invitation.features);
   const consumed = await markInvitationAcceptedQuery(invitation.id);
   return { invitation: consumed, company };
 }
@@ -214,7 +227,12 @@ export async function registerAndAcceptInvitation(
   };
   const user = await createUser(createInput);
   try {
-    await createMembership({ userId: user.id, companyId: company.id, role: invitation.role });
+    await createMembership({
+      userId: user.id,
+      companyId: company.id,
+      role: invitation.role,
+      features: invitation.features,
+    });
     const consumed = await markInvitationAcceptedQuery(invitation.id);
     return { user, company, invitation: consumed };
   } catch (error) {
@@ -246,7 +264,12 @@ async function getValidInvitationByTokenStrict(token: string): Promise<Invitatio
   return found;
 }
 
-async function ensureMembership(userId: string, companyId: string, role: Role): Promise<void> {
+async function ensureMembership(
+  userId: string,
+  companyId: string,
+  role: Role,
+  features: readonly string[],
+): Promise<void> {
   const existing = await getMembership(userId, companyId);
   if (existing) {
     throw new ValidationError({
@@ -255,7 +278,7 @@ async function ensureMembership(userId: string, companyId: string, role: Role): 
       action: "Acesse a empresa diretamente.",
     });
   }
-  await createMembership({ userId, companyId, role });
+  await createMembership({ userId, companyId, role, features });
 }
 
 async function assertNoActiveInvitation(companyId: string, email: string): Promise<void> {
@@ -365,20 +388,22 @@ async function insertInvitationQuery(input: {
   companyId: string;
   email: string;
   role: Role;
+  features: string[];
   token: string;
   invitedBy: string;
   expiresAt: Date;
 }): Promise<Invitation> {
   const result = await query<Invitation>({
     text: `
-      INSERT INTO invitations (company_id, email, role, token, invited_by, expires_at)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO invitations (company_id, email, role, features, token, invited_by, expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     ;`,
     values: [
       input.companyId,
       input.email,
       input.role,
+      input.features,
       input.token,
       input.invitedBy,
       input.expiresAt,

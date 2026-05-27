@@ -1,23 +1,39 @@
 "use client";
 
+// Invite a new member. Role select acts as a preset that seeds the feature
+// list, and the grouped checkboxes let the inviter narrow or widen the set
+// before sending. The server re-sanitizes the payload (closes deps, drops
+// non-assignable features) so a tampered client cannot bypass the rules.
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { PermissionCheckboxes } from "@/components/permission-checkboxes";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ROLE_DESCRIPTION_PT_BR, ROLE_LABEL_PT_BR } from "@/lib/role-labels";
-import { ASSIGNABLE_ROLES, type Role } from "@/lib/roles";
+import { ASSIGNABLE_ROLES, ROLE_PERMISSIONS, sanitizeFeatures, type Role } from "@/lib/roles";
 
 type FieldError = { message: string; action?: string };
+
+const DEFAULT_ROLE: Role = "member";
 
 export function InviteForm({ slug }: { slug: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("member");
+  const [role, setRole] = useState<Role>(DEFAULT_ROLE);
+  const [features, setFeatures] = useState<string[]>(() => [
+    ...(ROLE_PERMISSIONS[DEFAULT_ROLE] as readonly string[]),
+  ]);
   const [error, setError] = useState<FieldError | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function applyPreset(target: Role) {
+    setRole(target);
+    setFeatures([...(ROLE_PERMISSIONS[target] as readonly string[])]);
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,7 +43,7 @@ export function InviteForm({ slug }: { slug: string }) {
       const res = await fetch(`/api/v1/companies/${encodeURIComponent(slug)}/invitations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ email, role, features: sanitizeFeatures(features) }),
       });
       const body = await res.json();
       if (res.status === 201) {
@@ -47,7 +63,7 @@ export function InviteForm({ slug }: { slug: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="email">Email do convidado</Label>
         <Input
@@ -62,12 +78,12 @@ export function InviteForm({ slug }: { slug: string }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="role">Função</Label>
+        <Label htmlFor="role">Função (preset)</Label>
         <select
           id="role"
           name="role"
           value={role}
-          onChange={(e) => setRole(e.target.value as Role)}
+          onChange={(e) => applyPreset(e.target.value as Role)}
           disabled={loading}
           className="border-input bg-transparent text-foreground h-9 w-full rounded-md border px-2.5 text-sm shadow-xs"
         >
@@ -78,6 +94,15 @@ export function InviteForm({ slug }: { slug: string }) {
           ))}
         </select>
         <p className="text-muted-foreground text-xs">{ROLE_DESCRIPTION_PT_BR[role]}</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Permissões</Label>
+        <p className="text-muted-foreground text-xs">
+          Ajuste os checkboxes para refinar o preset. Permissões dependentes (ex.: editar requer
+          ler) são marcadas em conjunto.
+        </p>
+        <PermissionCheckboxes value={features} onChange={setFeatures} disabled={loading} />
       </div>
 
       {error && (

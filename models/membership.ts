@@ -33,9 +33,14 @@ export async function createMembership(input: {
   userId: string;
   companyId: string;
   role: Role;
+  // Optional override: when an invite was issued with a granular feature set
+  // (different from ROLE_PERMISSIONS[role]) the invite-accept path passes it
+  // through so the new membership lands with exactly what the inviter chose.
+  // Caller is expected to have sanitized the list.
+  features?: readonly string[];
 }): Promise<Membership> {
   validateRole(input.role);
-  const features = [...ROLE_PERMISSIONS[input.role]];
+  const features = input.features ? [...input.features] : [...ROLE_PERMISSIONS[input.role]];
   const result = await query<Membership>({
     text: `
       INSERT INTO memberships (user_id, company_id, role, features)
