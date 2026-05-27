@@ -127,3 +127,18 @@
     @apply font-sans;
   }
 }
+
+/* Top-of-viewport loading bar (see components/loading-bar.tsx). The shimmer
+   sweeps a short colored segment across the bar so the user gets sustained
+   motion even on a single long request like a bcrypt-bounded login. */
+@keyframes loading-shimmer {
+  0% {
+    left: -33%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+.animate-loading-shimmer {
+  animation: loading-shimmer 1.1s ease-in-out infinite;
+}
