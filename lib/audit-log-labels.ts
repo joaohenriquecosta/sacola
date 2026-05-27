@@ -66,6 +66,12 @@ export function describeAuditEvent(event: {
       return `${actor} editou o cliente "${get(m, "name") ?? "sem nome"}".`;
     case "client.deleted":
       return `${actor} removeu o cliente "${get(m, "name") ?? "sem nome"}".`;
+    case "order.created":
+      return `${actor} criou pedido para ${get(m, "client_name") ?? "um cliente"} (${typeof m.item_count === "number" ? m.item_count : "?"} ${m.item_count === 1 ? "item" : "itens"}).`;
+    case "order.status_changed":
+      return `${actor} mudou o status do pedido de ${get(m, "old_status") ?? "?"} para ${get(m, "new_status") ?? "?"}.`;
+    case "order.deleted":
+      return `${actor} excluiu um pedido (estava ${get(m, "status_at_delete") ?? "?"}).`;
     default:
       return `${actor} executou ${event.action}.`;
   }

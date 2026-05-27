@@ -28,23 +28,35 @@ const COMPANY_MANAGEMENT_PERMISSIONS = [
   "create:client",
   "update:client",
   "delete:client",
+  // Order CRUD: lifecycle de pedido completo. update:order cobre transição
+  // de status no MVP; PR de lifecycle (issue #12) refina pra
+  // transition:order:to_separado etc se necessário.
+  "read:order",
+  "create:order",
+  "update:order",
+  "delete:order",
 ] as const;
 
 // "Read-only" today still means anyone who works inside the company can see
 // what's being sold and who the clients are. Vendedor/separador/entregador
-// all need read:product + read:client; vendedor diverges below to also
-// create/update clients mid-attendance.
+// all need read:product + read:client + read:order; eles divergem abaixo
+// conforme a função na operação.
 const READ_ONLY_PERMISSIONS = [
   "read:company",
   "read:member",
   "read:product",
   "read:client",
+  "read:order",
 ] as const;
 
-// Vendedor é o único non-management que cadastra cliente: durante o
-// atendimento de pedido, é vendedor que abre uma ficha nova ou ajusta
-// o telefone. Não recebe delete:client — limpeza é trabalho do gerente.
-const VENDEDOR_EXTRA = ["create:client", "update:client"] as const;
+// Vendedor: cadastra cliente + cria pedido durante atendimento. Não
+// transita status do pedido (essa parte é da operação) e não apaga
+// cadastro (limpeza é do gerente).
+const VENDEDOR_EXTRA = ["create:client", "update:client", "create:order"] as const;
+
+// Separador + entregador: leem catálogo/clientes e transitam status do
+// pedido (separar / marcar como entregue). Não criam pedido.
+const OPERATIONAL_EXTRA = ["update:order"] as const;
 
 // Two tiers in the same catalog:
 //
@@ -66,8 +78,8 @@ export const ROLE_PERMISSIONS = {
   member: [...READ_ONLY_PERMISSIONS],
   gerente: [...COMPANY_MANAGEMENT_PERMISSIONS],
   vendedor: [...READ_ONLY_PERMISSIONS, ...VENDEDOR_EXTRA],
-  separador: [...READ_ONLY_PERMISSIONS],
-  entregador: [...READ_ONLY_PERMISSIONS],
+  separador: [...READ_ONLY_PERMISSIONS, ...OPERATIONAL_EXTRA],
+  entregador: [...READ_ONLY_PERMISSIONS, ...OPERATIONAL_EXTRA],
 } as const satisfies Record<string, readonly string[]>;
 
 export type Role = keyof typeof ROLE_PERMISSIONS;
@@ -150,6 +162,10 @@ export const ASSIGNABLE_FEATURES: readonly string[] = [
   "create:client",
   "update:client",
   "delete:client",
+  "read:order",
+  "create:order",
+  "update:order",
+  "delete:order",
 ] as const;
 
 // Permission groups for the granular editor. Each feature can declare a
@@ -213,6 +229,16 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       { id: "create:client", label: "Cadastrar clientes", requires: ["read:client"] },
       { id: "update:client", label: "Editar clientes", requires: ["read:client"] },
       { id: "delete:client", label: "Remover clientes", requires: ["read:client"] },
+    ],
+  },
+  {
+    id: "orders",
+    label: "Pedidos",
+    features: [
+      { id: "read:order", label: "Ver pedidos" },
+      { id: "create:order", label: "Criar pedidos", requires: ["read:order"] },
+      { id: "update:order", label: "Atualizar status do pedido", requires: ["read:order"] },
+      { id: "delete:order", label: "Excluir pedidos", requires: ["read:order"] },
     ],
   },
 ] as const;
