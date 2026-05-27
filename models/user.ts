@@ -83,7 +83,9 @@ export async function getUserByUsername(username: string): Promise<User> {
 }
 
 export function serializePublicUser(user: User): PublicUser {
-  const { password: _password, ...publicFields } = user;
+  const { password, ...publicFields } = user;
+  // Intentionally omit the password from the public payload.
+  void password;
   return publicFields;
 }
 
