@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { canRequest, errorToResponse, loadCurrentUser } from "infra/controller";
 import { AuthenticationError } from "infra/errors";
+import { logSafe } from "models/audit-log";
 import { filterOutput } from "models/authorization";
 import {
   deleteCompanyById,
@@ -42,6 +43,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (typeof body?.name === "string") patch.name = body.name;
     if (typeof body?.slug === "string") patch.slug = body.slug;
     const updated = await updateCompany(company.id, patch);
+    await logSafe({
+      companyId: company.id,
+      actorId: user.id,
+      action: "company.updated",
+      targetType: "company",
+      targetId: company.id,
+      metadata: {
+        ...(patch.name !== undefined && { old_name: company.name, new_name: updated.name }),
+        ...(patch.slug !== undefined && { old_slug: company.slug, new_slug: updated.slug }),
+      },
+    });
     const filtered = filterOutput(
       { id: user.id, features: user.features },
       "read:company",

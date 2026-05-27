@@ -1,0 +1,60 @@
+// Human-friendly rendering of audit events. Kept pure (no DB / no server-only
+// imports) so client components can use it. Action ID stays free-form in the
+// DB; missing labels fall back to the raw action string.
+
+import { roleLabel } from "@/lib/role-labels";
+import type { Role } from "@/lib/roles";
+
+type Metadata = Record<string, unknown>;
+
+function asRole(value: unknown): string | undefined {
+  return typeof value === "string" ? roleLabel(value as Role) : undefined;
+}
+
+function get(meta: Metadata, key: string): string | undefined {
+  const v = meta[key];
+  return typeof v === "string" ? v : undefined;
+}
+
+// Returns a sentence describing what `actor` did. Already includes the
+// actor's name; the caller renders timestamp + actor avatar separately as
+// needed.
+export function describeAuditEvent(event: {
+  action: string;
+  actor_username: string;
+  metadata: Metadata;
+}): string {
+  const actor = event.actor_username;
+  const m = event.metadata;
+
+  switch (event.action) {
+    case "company.created":
+      return `${actor} criou a empresa${get(m, "name") ? ` "${get(m, "name")}"` : ""}.`;
+    case "company.updated":
+      if (m.old_name && m.new_name) {
+        return `${actor} renomeou a empresa de "${m.old_name}" para "${m.new_name}".`;
+      }
+      if (m.old_slug && m.new_slug) {
+        return `${actor} mudou o slug da empresa de "${m.old_slug}" para "${m.new_slug}".`;
+      }
+      return `${actor} atualizou as configurações da empresa.`;
+    case "ownership.transferred":
+      return `${actor} transferiu a propriedade da empresa para outro membro.`;
+    case "invitation.created":
+      return `${actor} convidou ${get(m, "email") ?? "alguém"} como ${asRole(m.role) ?? "membro"}.`;
+    case "invitation.revoked":
+      return `${actor} revogou o convite para ${get(m, "email") ?? "um endereço"}.`;
+    case "invitation.resent":
+      return `${actor} reenviou o convite para ${get(m, "email") ?? "um endereço"}.`;
+    case "member.joined":
+      return `${actor} aceitou o convite e entrou como ${asRole(m.role) ?? "membro"}.`;
+    case "member.role_changed":
+      return `${actor} mudou a função de um membro de ${asRole(m.old_role) ?? m.old_role} para ${asRole(m.new_role) ?? m.new_role}.`;
+    case "member.removed":
+      return `${actor} removeu um membro (${asRole(m.removed_role) ?? m.removed_role}) da empresa.`;
+    case "member.left":
+      return `${actor} saiu da empresa (era ${asRole(m.role) ?? m.role}).`;
+    default:
+      return `${actor} executou ${event.action}.`;
+  }
+}

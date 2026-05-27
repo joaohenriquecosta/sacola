@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { canRequest, errorToResponse, loadCurrentUser } from "infra/controller";
 import { AuthenticationError } from "infra/errors";
+import { logSafe } from "models/audit-log";
 import { filterOutput } from "models/authorization";
 import { createCompany, listCompaniesForUser } from "models/company";
 
@@ -14,6 +15,14 @@ export async function POST(request: NextRequest) {
       name: body?.name,
       slug: body?.slug,
       ownerUserId: user.id,
+    });
+    await logSafe({
+      companyId: company.id,
+      actorId: user.id,
+      action: "company.created",
+      targetType: "company",
+      targetId: company.id,
+      metadata: { name: company.name, slug: company.slug },
     });
     const filtered = filterOutput(
       { id: user.id, features: user.features },

@@ -7,7 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { canRequest, errorToResponse } from "infra/controller";
-import { ForbiddenError, NotFoundError, ValidationError } from "infra/errors";
+import { AuthenticationError, ForbiddenError, NotFoundError, ValidationError } from "infra/errors";
+import { logSafe } from "models/audit-log";
 import { isValidRole } from "models/authorization";
 import { getCompanyBySlug } from "models/company";
 import { deleteMembership, getMembership, updateMembershipRole } from "models/membership";
@@ -18,7 +19,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const { slug, user_id } = await context.params;
     const company = await getCompanyBySlug(slug);
-    await canRequest("update:member", { companyId: company.id });
+    const { user } = await canRequest("update:member", { companyId: company.id });
+    if (!user) throw new AuthenticationError();
 
     const target = await getMembership(user_id, company.id);
     if (!target) throw new NotFoundError({ message: "Membro não encontrado." });
@@ -44,6 +46,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const updated = await updateMembershipRole(target.id, body.role);
+    await logSafe({
+      companyId: company.id,
+      actorId: user.id,
+      action: "member.role_changed",
+      targetType: "membership",
+      targetId: target.id,
+      metadata: {
+        member_user_id: target.user_id,
+        old_role: target.role,
+        new_role: updated.role,
+      },
+    });
     return NextResponse.json({
       id: updated.id,
       user_id: updated.user_id,
@@ -83,6 +97,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
     }
 
     await deleteMembership(target.id);
+    await logSafe({
+      companyId: company.id,
+      actorId: user.id,
+      action: "member.removed",
+      targetType: "membership",
+      targetId: target.id,
+      metadata: { member_user_id: target.user_id, removed_role: target.role },
+    });
     return new NextResponse(null, { status: 204 });
   } catch (err) {
     return errorToResponse(err);

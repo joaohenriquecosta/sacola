@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { canRequest, errorToResponse } from "infra/controller";
 import { AuthenticationError, ValidationError } from "infra/errors";
+import { logSafe } from "models/audit-log";
 import { getCompanyBySlug } from "models/company";
 import { transferOwnership } from "models/membership";
 
@@ -30,6 +31,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
       companyId: company.id,
       currentOwnerUserId: user.id,
       newOwnerUserId: body.user_id,
+    });
+    await logSafe({
+      companyId: company.id,
+      actorId: user.id,
+      action: "ownership.transferred",
+      targetType: "membership",
+      targetId: newOwner.id,
+      metadata: {
+        new_owner_user_id: newOwner.user_id,
+        former_owner_user_id: demotedOwner.user_id,
+      },
     });
 
     return NextResponse.json({
