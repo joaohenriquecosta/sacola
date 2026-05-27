@@ -13,6 +13,10 @@ export type Product = {
   // formatting (e.g. "R$ 12,90"). Storing cents matches the column's
   // integer type and avoids the float-rounding bug class entirely.
   price_cents: number;
+  // What the company paid for the product (preço de custo). Used to compute
+  // margin downstream. Zero means "not informed" — the UI may decide to
+  // hide cost-derived metrics in that case.
+  cost_cents: number;
   unit: string;
   created_at: Date;
   updated_at: Date;
@@ -28,21 +32,26 @@ export type CreateProductInput = {
   companyId: string;
   name: string;
   priceCents: number;
+  // Optional: defaults to 0 ("not informed") so existing callers don't
+  // have to pass it. Same validation as price (non-negative integer).
+  costCents?: number;
   unit: string;
 };
 
 export async function createProduct(input: CreateProductInput): Promise<Product> {
   const name = normalizeName(input.name);
   const unit = normalizeUnit(input.unit);
-  validatePrice(input.priceCents);
+  validateMoney(input.priceCents, "price");
+  const costCents = input.costCents ?? 0;
+  validateMoney(costCents, "cost");
 
   const result = await query<Product>({
     text: `
-      INSERT INTO products (company_id, name, price_cents, unit)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO products (company_id, name, price_cents, cost_cents, unit)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     ;`,
-    values: [input.companyId, name, input.priceCents, unit],
+    values: [input.companyId, name, input.priceCents, costCents, unit],
   });
   return result.rows[0];
 }
@@ -77,6 +86,7 @@ export async function listProductsByCompany(companyId: string): Promise<Product[
 export type UpdateProductInput = {
   name?: string;
   priceCents?: number;
+  costCents?: number;
   unit?: string;
 };
 
@@ -91,9 +101,14 @@ export async function updateProduct(id: string, input: UpdateProductInput): Prom
     values.push(normalizeName(input.name));
   }
   if (input.priceCents !== undefined) {
-    validatePrice(input.priceCents);
+    validateMoney(input.priceCents, "price");
     sets.push(`price_cents = $${sets.length + 2}`);
     values.push(input.priceCents);
+  }
+  if (input.costCents !== undefined) {
+    validateMoney(input.costCents, "cost");
+    sets.push(`cost_cents = $${sets.length + 2}`);
+    values.push(input.costCents);
   }
   if (input.unit !== undefined) {
     sets.push(`unit = $${sets.length + 2}`);
@@ -103,7 +118,7 @@ export async function updateProduct(id: string, input: UpdateProductInput): Prom
   if (sets.length === 0) {
     throw new ValidationError({
       message: "Nada para atualizar.",
-      action: "Envie pelo menos um campo: name, price_cents ou unit.",
+      action: "Envie pelo menos um campo: name, price_cents, cost_cents ou unit.",
     });
   }
 
@@ -176,16 +191,18 @@ function normalizeUnit(unit: unknown): string {
   return trimmed;
 }
 
-function validatePrice(priceCents: unknown): asserts priceCents is number {
+// Shared between price and cost — same shape, different labels in the
+// error so the form can point the user at the right field.
+function validateMoney(value: unknown, kind: "price" | "cost"): asserts value is number {
   if (
-    typeof priceCents !== "number" ||
-    !Number.isInteger(priceCents) ||
-    priceCents < 0 ||
-    priceCents > PRICE_MAX_CENTS
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < 0 ||
+    value > PRICE_MAX_CENTS
   ) {
     throw new ValidationError({
-      message: "Preço inválido.",
-      action: "Informe o preço em centavos (inteiro não negativo).",
+      message: kind === "price" ? "Preço inválido." : "Custo inválido.",
+      action: `Informe o ${kind === "price" ? "preço" : "custo"} em centavos (inteiro não negativo).`,
     });
   }
 }

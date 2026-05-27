@@ -39,6 +39,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       companyId: company.id,
       name: body?.name,
       priceCents: body?.price_cents,
+      costCents: typeof body?.cost_cents === "number" ? body.cost_cents : undefined,
       unit: body?.unit,
     });
     await logSafe({
@@ -47,7 +48,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       action: "product.created",
       targetType: "product",
       targetId: product.id,
-      metadata: { name: product.name, price_cents: product.price_cents, unit: product.unit },
+      metadata: {
+        name: product.name,
+        price_cents: product.price_cents,
+        cost_cents: product.cost_cents,
+        unit: product.unit,
+      },
     });
     return NextResponse.json(toView(product), { status: 201 });
   } catch (err) {
@@ -60,6 +66,7 @@ function toView(p: {
   company_id: string;
   name: string;
   price_cents: number;
+  cost_cents: number;
   unit: string;
   created_at: Date;
   updated_at: Date;
@@ -69,6 +76,7 @@ function toView(p: {
     company_id: p.company_id,
     name: p.name,
     price_cents: p.price_cents,
+    cost_cents: p.cost_cents,
     unit: p.unit,
     created_at: p.created_at,
     updated_at: p.updated_at,

@@ -65,6 +65,7 @@ export default async function ProdutosPage({ params }: { params: Params }) {
                 id={p.id}
                 name={p.name}
                 priceCents={p.price_cents}
+                costCents={p.cost_cents}
                 unit={p.unit}
                 canUpdate={canUpdate}
                 canDelete={canDelete}

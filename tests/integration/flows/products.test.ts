@@ -131,6 +131,37 @@ describe("POST /products", () => {
     });
     expect(res.status).toBe(400);
   });
+
+  test("Stores cost_cents when provided", async () => {
+    const res = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/products`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: ownerCookie },
+      body: JSON.stringify({ name: "Alface", price_cents: 590, cost_cents: 250, unit: "un" }),
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.cost_cents).toBe(250);
+  });
+
+  test("Defaults cost_cents to 0 when omitted", async () => {
+    const res = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/products`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: ownerCookie },
+      body: JSON.stringify({ name: "Banana", price_cents: 480, unit: "kg" }),
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.cost_cents).toBe(0);
+  });
+
+  test("Validates negative cost", async () => {
+    const res = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/products`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: ownerCookie },
+      body: JSON.stringify({ name: "X", price_cents: 100, cost_cents: -1, unit: "un" }),
+    });
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("GET /products", () => {
@@ -165,6 +196,21 @@ describe("PATCH /products/[id]", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.name).toBe("Tomate italiano orgânico");
+    expect(body.price_cents).toBe(1490);
+  });
+
+  test("Owner updates cost without touching price", async () => {
+    const res = await fetch(
+      `${testBaseUrl}/api/v1/companies/${companySlug}/products/${firstProductId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: ownerCookie },
+        body: JSON.stringify({ cost_cents: 800 }),
+      },
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.cost_cents).toBe(800);
     expect(body.price_cents).toBe(1490);
   });
 

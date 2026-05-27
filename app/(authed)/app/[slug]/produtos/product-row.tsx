@@ -12,12 +12,22 @@ type Props = {
   id: string;
   name: string;
   priceCents: number;
+  costCents: number;
   unit: string;
   canUpdate: boolean;
   canDelete: boolean;
 };
 
-export function ProductRow({ slug, id, name, priceCents, unit, canUpdate, canDelete }: Props) {
+export function ProductRow({
+  slug,
+  id,
+  name,
+  priceCents,
+  costCents,
+  unit,
+  canUpdate,
+  canDelete,
+}: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -41,6 +51,7 @@ export function ProductRow({ slug, id, name, priceCents, unit, canUpdate, canDel
         <p className="truncate font-medium">{name}</p>
         <p className="text-muted-foreground text-xs">
           {formatCentsBRL(priceCents)} / {unit}
+          {costCents > 0 && ` · custo ${formatCentsBRL(costCents)}`}
         </p>
       </div>
       {(canUpdate || canDelete) && (
@@ -48,7 +59,7 @@ export function ProductRow({ slug, id, name, priceCents, unit, canUpdate, canDel
           {canUpdate && (
             <ProductDialog
               slug={slug}
-              initial={{ id, name, priceCents, unit }}
+              initial={{ id, name, priceCents, costCents, unit }}
               trigger={
                 <Button variant="outline" size="sm">
                   Editar

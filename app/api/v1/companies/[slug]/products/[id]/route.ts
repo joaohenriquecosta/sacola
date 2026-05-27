@@ -30,6 +30,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const updated = await updateProduct(id, {
       name: typeof body?.name === "string" ? body.name : undefined,
       priceCents: typeof body?.price_cents === "number" ? body.price_cents : undefined,
+      costCents: typeof body?.cost_cents === "number" ? body.cost_cents : undefined,
       unit: typeof body?.unit === "string" ? body.unit : undefined,
     });
     await logSafe({
@@ -42,11 +43,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         old: {
           name: existing.name,
           price_cents: existing.price_cents,
+          cost_cents: existing.cost_cents,
           unit: existing.unit,
         },
         new: {
           name: updated.name,
           price_cents: updated.price_cents,
+          cost_cents: updated.cost_cents,
           unit: updated.unit,
         },
       },
