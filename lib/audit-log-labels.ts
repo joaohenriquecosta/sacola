@@ -54,6 +54,12 @@ export function describeAuditEvent(event: {
       return `${actor} removeu um membro (${asRole(m.removed_role) ?? m.removed_role}) da empresa.`;
     case "member.left":
       return `${actor} saiu da empresa (era ${asRole(m.role) ?? m.role}).`;
+    case "product.created":
+      return `${actor} cadastrou o produto "${get(m, "name") ?? "sem nome"}".`;
+    case "product.updated":
+      return `${actor} editou um produto.`;
+    case "product.deleted":
+      return `${actor} removeu o produto "${get(m, "name") ?? "sem nome"}".`;
     default:
       return `${actor} executou ${event.action}.`;
   }

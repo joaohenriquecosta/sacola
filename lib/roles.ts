@@ -17,9 +17,18 @@ const COMPANY_MANAGEMENT_PERMISSIONS = [
   "create:invitation",
   "delete:invitation",
   "read:audit_log",
+  // Product CRUD belongs to anyone managing the company; refinements per
+  // Sacola job role (vendedor edits own listing?) can fork later.
+  "read:product",
+  "create:product",
+  "update:product",
+  "delete:product",
 ] as const;
 
-const READ_ONLY_PERMISSIONS = ["read:company", "read:member"] as const;
+// "Read-only" today still means anyone who works inside the company can see
+// what's being sold. Vendedor/separador/entregador all need read:product to
+// do their jobs.
+const READ_ONLY_PERMISSIONS = ["read:company", "read:member", "read:product"] as const;
 
 // Two tiers in the same catalog:
 //
@@ -117,6 +126,10 @@ export const ASSIGNABLE_FEATURES: readonly string[] = [
   "create:invitation",
   "delete:invitation",
   "read:audit_log",
+  "read:product",
+  "create:product",
+  "update:product",
+  "delete:product",
 ] as const;
 
 // Permission groups for the granular editor. Each feature can declare a
@@ -161,6 +174,16 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
     id: "audit",
     label: "Auditoria",
     features: [{ id: "read:audit_log", label: "Ver log de auditoria" }],
+  },
+  {
+    id: "products",
+    label: "Produtos",
+    features: [
+      { id: "read:product", label: "Ver catálogo de produtos" },
+      { id: "create:product", label: "Cadastrar produtos", requires: ["read:product"] },
+      { id: "update:product", label: "Editar produtos", requires: ["read:product"] },
+      { id: "delete:product", label: "Remover produtos", requires: ["read:product"] },
+    ],
   },
 ] as const;
 
