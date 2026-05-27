@@ -16,6 +16,7 @@ import { getCompanyBySlug } from "models/company";
 import { getMembership, listMembersByCompany } from "models/membership";
 import { listOrdersByCompany } from "models/order";
 import { listProductsByCompany } from "models/product";
+import { listBalancesByCompany } from "models/stock";
 
 type Params = Promise<{ slug: string }>;
 
@@ -39,10 +40,13 @@ export default async function CompanyPage({ params }: { params: Params }) {
   const canSeeProducts = membership.features.includes("read:product");
   const canSeeClients = membership.features.includes("read:client");
   const canSeeOrders = membership.features.includes("read:order");
+  const canSeeStock = membership.features.includes("read:stock_movement");
   const members = await listMembersByCompany(company.id);
   const products = canSeeProducts ? await listProductsByCompany(company.id) : [];
   const clients = canSeeClients ? await listClientsByCompany(company.id) : [];
   const orders = canSeeOrders ? await listOrdersByCompany(company.id) : [];
+  const stockBalances = canSeeStock ? await listBalancesByCompany(company.id) : [];
+  const lowStockCount = stockBalances.filter((b) => b.balance <= 0).length;
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -145,6 +149,28 @@ export default async function CompanyPage({ params }: { params: Params }) {
             <Button variant="outline" size="sm" asChild>
               <Link href={`/app/${company.slug}/pedidos`}>
                 {membership.features.includes("create:order") ? "Gerenciar" : "Ver tudo"}
+              </Link>
+            </Button>
+          </CardHeader>
+        </Card>
+      )}
+
+      {canSeeStock && (
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div>
+              <CardTitle>Estoque</CardTitle>
+              <CardDescription>
+                {stockBalances.length === 0
+                  ? "Cadastre produtos para acompanhar o estoque."
+                  : lowStockCount > 0
+                    ? `${lowStockCount} ${lowStockCount === 1 ? "produto" : "produtos"} sem saldo.`
+                    : `${stockBalances.length} ${stockBalances.length === 1 ? "produto" : "produtos"} com saldo.`}
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/app/${company.slug}/estoque`}>
+                {membership.features.includes("create:stock_movement") ? "Gerenciar" : "Ver tudo"}
               </Link>
             </Button>
           </CardHeader>

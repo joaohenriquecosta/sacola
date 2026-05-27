@@ -98,11 +98,13 @@ describe("Role catalog", () => {
     expect([...ROLE_PERMISSIONS.gerente].sort()).toEqual([...ROLE_PERMISSIONS.admin].sort());
   });
 
-  test("separador extends baseline com transition:order:separar (operacional)", () => {
+  test("separador extends baseline com transition:order:separar + create:stock_movement", () => {
+    // Separador transita pedido para "separado" e lança movimento de
+    // estoque (saída ao separar, recontagem manual).
     const member: readonly string[] = ROLE_PERMISSIONS.member;
     const features: readonly string[] = ROLE_PERMISSIONS.separador;
     const extra = features.filter((f) => !member.includes(f)).sort();
-    expect(extra).toEqual(["transition:order:separar"]);
+    expect(extra).toEqual(["create:stock_movement", "transition:order:separar"]);
   });
 
   test("entregador extends baseline com transition:order:entregar (operacional)", () => {
