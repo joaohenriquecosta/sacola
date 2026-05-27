@@ -89,6 +89,12 @@ The script checks registration (201 + unactivated features), that login is block
 
 This means each PR can ship migrations without risk to production data, and you can smoke-test the preview URL before merging.
 
+### Function region (`vercel.json`)
+
+`vercel.json` pins the serverless functions to `gru1` (São Paulo) so they sit in the same continent as the Neon database (`sa-east-1`). Without this, Vercel's default region is `iad1` (US East) and every DB query crosses ~7000 km — each TLS handshake + auth roundtrip stacks up to ~1.5 s of pure network on top of the actual work.
+
+If the prod DB moves to a different region, update `vercel.json` to match (latency dominates everything else here).
+
 ## Troubleshooting
 
 - **Build fails at `node-pg-migrate up`**: usually means `DATABASE_URL_UNPOOLED` isn't set. Check the integration is installed and the prefix is `DATABASE` (not the default `STORAGE`).
