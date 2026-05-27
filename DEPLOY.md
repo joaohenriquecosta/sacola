@@ -39,16 +39,24 @@ Production runs on **Vercel** (Next.js host) + **Neon** (managed Postgres). Prev
    | --------------------- | ----------------------------------------------------------- | ------------------- |
    | `SESSION_COOKIE_NAME` | `sacola_session_id`                                         | Production, Preview |
    | `TZ`                  | `America/Sao_Paulo`                                         | Production, Preview |
-   | `PUBLIC_ORIGIN`       | `https://sacola1.vercel.app` (your prod alias)              | Production          |
+   | `PUBLIC_ORIGIN`       | `https://sacola.pop.dev.br` (the public domain you serve)   | Production          |
    | `EMAIL_SMTP_HOST`     | `smtp.resend.com`                                           | Production, Preview |
    | `EMAIL_SMTP_PORT`     | `465`                                                       | Production, Preview |
    | `EMAIL_SMTP_USER`     | `resend`                                                    | Production, Preview |
    | `EMAIL_SMTP_PASS`     | `re_xxxxxxxx` (Resend API key)                              | Production, Preview |
-   | `EMAIL_FROM`          | `Sacola <onboarding@resend.dev>` (or your verified address) | Production, Preview |
+   | `EMAIL_FROM`          | `Sacola <noreply@contato.your-domain>` (verified in Resend) | Production, Preview |
 
    For the email vars, see the next section for Resend setup.
 
 4. Click **Deploy**.
+
+### 3b. Wire the public domain
+
+The production app lives at `https://sacola.pop.dev.br`. DNS for `pop.dev.br` is on Vercel DNS (a wildcard ALIAS routes every subdomain to Vercel's edge), so adding `sacola` is essentially zero-config:
+
+1. Project Settings → **Domains** → **Add** → `sacola.pop.dev.br`. Vercel issues TLS automatically.
+2. The `PUBLIC_ORIGIN` env var above must point at this same URL — it's the base used in activation/invitation email links.
+3. If you serve from a different domain, swap both the project domain attachment and `PUBLIC_ORIGIN` together (they must agree, otherwise email links lead users to a page that doesn't exist on the host they're hitting).
 
 ### 3a. Configure Resend (activation emails)
 
@@ -62,14 +70,13 @@ Production runs on **Vercel** (Next.js host) + **Neon** (managed Postgres). Prev
 If **Vercel Deployment Protection** is on for the project (default on the Pro plan), create a bypass secret first: Project Settings → Deployment Protection → **Protection Bypass for Automation** → Add Secret. Save the value as `VERCEL_AUTOMATION_BYPASS_SECRET` in your shell. Then:
 
 ```sh
-VERCEL_AUTOMATION_BYPASS_SECRET=<secret> \
-  ./infra/scripts/smoke-prod.sh https://<your-project>.vercel.app
+VERCEL_AUTOMATION_BYPASS_SECRET=<secret> ./infra/scripts/smoke-prod.sh
 ```
 
-If Deployment Protection is off, omit the env var:
+The script defaults to `https://sacola.pop.dev.br`. To target a preview deploy or a different host, pass it as a positional argument:
 
 ```sh
-./infra/scripts/smoke-prod.sh https://<your-project>.vercel.app
+./infra/scripts/smoke-prod.sh https://some-preview.vercel.app
 ```
 
 The script checks registration (201 + unactivated features), that login is blocked until activation (401 with the activation message), anti-enumeration timing on bad credentials, validation 400s, and that the migrations endpoint is gated to 404 in production. The full post-activation login/logout/cookie path is exercised by integration tests in CI — the smoke runner can't reach the activation link in prod (no DB or mailbox access).

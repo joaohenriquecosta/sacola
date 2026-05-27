@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Smoke test for the deployed auth foundation.
 #
-# Usage:
-#   BASE_URL=https://sacola.vercel.app ./infra/scripts/smoke-prod.sh
-#   ./infra/scripts/smoke-prod.sh https://sacola.vercel.app
+# Usage (defaults to the production URL):
+#   ./infra/scripts/smoke-prod.sh
+#   ./infra/scripts/smoke-prod.sh https://some-preview.vercel.app
+#   BASE_URL=https://some-preview.vercel.app ./infra/scripts/smoke-prod.sh
 #
 # When Vercel Deployment Protection is on, pass the bypass secret so every
 # request goes through:
-#   VERCEL_AUTOMATION_BYPASS_SECRET=<secret> ./infra/scripts/smoke-prod.sh <url>
+#   VERCEL_AUTOMATION_BYPASS_SECRET=<secret> ./infra/scripts/smoke-prod.sh
 # (create the secret under Project Settings → Deployment Protection →
 #  Protection Bypass for Automation.)
 #
@@ -18,11 +19,8 @@
 
 set -uo pipefail
 
-BASE_URL="${1:-${BASE_URL:-}}"
-if [ -z "$BASE_URL" ]; then
-  echo "Usage: $0 <base_url>  (or set BASE_URL env var)" >&2
-  exit 1
-fi
+DEFAULT_BASE_URL="https://sacola.pop.dev.br"
+BASE_URL="${1:-${BASE_URL:-$DEFAULT_BASE_URL}}"
 BASE_URL="${BASE_URL%/}"
 
 command -v jq >/dev/null 2>&1 || { echo "jq is required" >&2; exit 1; }
