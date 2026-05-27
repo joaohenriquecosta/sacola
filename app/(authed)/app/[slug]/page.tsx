@@ -8,9 +8,9 @@ import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { roleLabel } from "@/lib/role-labels";
+import { isManagementRole, type Role } from "@/lib/roles";
 import { NotFoundError } from "infra/errors";
 import { loadCurrentUser } from "infra/controller";
-import { type Role } from "models/authorization";
 import { getCompanyBySlug } from "models/company";
 import { getMembership, listMembersByCompany } from "models/membership";
 
@@ -32,7 +32,7 @@ export default async function CompanyPage({ params }: { params: Params }) {
   const membership = await getMembership(user.id, company.id);
   if (!membership) notFound();
 
-  const canManage = membership.role === "owner" || membership.role === "admin";
+  const canManage = isManagementRole(membership.role);
   const members = await listMembersByCompany(company.id);
 
   return (

@@ -11,6 +11,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { isManagementRole } from "@/lib/roles";
 import { loadCurrentUser } from "infra/controller";
 import { NotFoundError } from "infra/errors";
 import { getCompanyBySlug } from "models/company";
@@ -39,7 +40,7 @@ export default async function ConfiguracoesPage({ params }: { params: Params }) 
   if (!membership) notFound();
 
   const isOwner = membership.role === "owner";
-  const isAdmin = isOwner || membership.role === "admin";
+  const isAdmin = isManagementRole(membership.role);
   const otherMembers = isOwner
     ? (await listMembersByCompany(company.id)).filter((m) => m.user_id !== user.id)
     : [];
@@ -65,7 +66,7 @@ export default async function ConfiguracoesPage({ params }: { params: Params }) 
           <CardHeader>
             <CardTitle>Transferir propriedade</CardTitle>
             <CardDescription>
-              Você se torna gerente; o novo dono assume controle total da empresa.
+              Você se torna administrador; o novo dono assume controle total da empresa.
             </CardDescription>
           </CardHeader>
           <CardContent>
