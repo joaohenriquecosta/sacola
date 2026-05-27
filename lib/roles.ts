@@ -38,18 +38,23 @@ const COMPANY_MANAGEMENT_PERMISSIONS = [
   "transition:order:entregar",
   "transition:order:cancelar",
   "delete:order",
+  // Stock ledger (append-only). create lança entrada/saída/ajuste;
+  // delete é estorno (perigoso, owner/gerente).
+  "read:stock_movement",
+  "create:stock_movement",
+  "delete:stock_movement",
 ] as const;
 
-// "Read-only" today still means anyone who works inside the company can see
-// what's being sold and who the clients are. Vendedor/separador/entregador
-// all need read:product + read:client + read:order; eles divergem abaixo
-// conforme a função na operação.
+// "Read-only" today still means anyone que trabalha na empresa vê
+// catálogo, clientes, pedidos e estoque. Vendedor/separador/entregador
+// divergem abaixo conforme a função na operação.
 const READ_ONLY_PERMISSIONS = [
   "read:company",
   "read:member",
   "read:product",
   "read:client",
   "read:order",
+  "read:stock_movement",
 ] as const;
 
 // Vendedor: cadastra cliente + cria pedido durante atendimento; cancela
@@ -62,9 +67,9 @@ const VENDEDOR_EXTRA = [
   "transition:order:cancelar",
 ] as const;
 
-// Separador: do criado vai pra separado. Não entrega (entregador) nem
-// cancela (vendedor / management).
-const SEPARADOR_EXTRA = ["transition:order:separar"] as const;
+// Separador: do criado vai pra separado + lança movimento de estoque
+// (saída ao separar, futuro: ajuste manual quando recontar bandeja).
+const SEPARADOR_EXTRA = ["transition:order:separar", "create:stock_movement"] as const;
 
 // Entregador: do separado vai pra entregue. Idem terminal.
 const ENTREGADOR_EXTRA = ["transition:order:entregar"] as const;
@@ -179,6 +184,9 @@ export const ASSIGNABLE_FEATURES: readonly string[] = [
   "transition:order:entregar",
   "transition:order:cancelar",
   "delete:order",
+  "read:stock_movement",
+  "create:stock_movement",
+  "delete:stock_movement",
 ] as const;
 
 // Permission groups for the granular editor. Each feature can declare a
@@ -266,6 +274,23 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
         requires: ["read:order"],
       },
       { id: "delete:order", label: "Excluir pedidos", requires: ["read:order"] },
+    ],
+  },
+  {
+    id: "stock",
+    label: "Estoque",
+    features: [
+      { id: "read:stock_movement", label: "Ver saldo e histórico de estoque" },
+      {
+        id: "create:stock_movement",
+        label: "Lançar entrada/saída/ajuste",
+        requires: ["read:stock_movement"],
+      },
+      {
+        id: "delete:stock_movement",
+        label: "Estornar movimento (apagar lançamento)",
+        requires: ["read:stock_movement"],
+      },
     ],
   },
 ] as const;

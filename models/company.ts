@@ -10,6 +10,7 @@ import { deleteClientsByCompany } from "models/client";
 import { createMembership, deleteMembershipsByCompany } from "models/membership";
 import { deleteOrdersByCompany } from "models/order";
 import { deleteProductsByCompany } from "models/product";
+import { deleteMovementsByCompany } from "models/stock";
 
 export { slugify };
 
@@ -151,8 +152,8 @@ export async function updateCompany(id: string, patch: UpdateCompanyInput): Prom
 // Deletes the company and cascades to memberships in application code (no FK
 // constraints on the schema — convention from the existing tables).
 export async function deleteCompanyById(id: string): Promise<void> {
-  // Order matters: orders + order_items referenciam clientes/produtos via
-  // snapshot, mas a operação inversa apaga primeiro porque é mais barato.
+  // Order matters: tudo que referencia produtos/clientes vai antes deles.
+  await deleteMovementsByCompany(id);
   await deleteOrdersByCompany(id);
   await deleteClientsByCompany(id);
   await deleteProductsByCompany(id);

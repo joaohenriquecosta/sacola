@@ -72,6 +72,13 @@ export function describeAuditEvent(event: {
       return `${actor} mudou o status do pedido de ${get(m, "old_status") ?? "?"} para ${get(m, "new_status") ?? "?"}.`;
     case "order.deleted":
       return `${actor} excluiu um pedido (estava ${get(m, "status_at_delete") ?? "?"}).`;
+    case "stock.movement_created": {
+      const kind = get(m, "kind");
+      const label = kind === "in" ? "entrada" : kind === "out" ? "saída" : "ajuste";
+      return `${actor} lançou ${label} no estoque de "${get(m, "product_name") ?? "produto"}".`;
+    }
+    case "stock.movement_deleted":
+      return `${actor} estornou um movimento de estoque.`;
     default:
       return `${actor} executou ${event.action}.`;
   }
