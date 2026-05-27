@@ -9,7 +9,12 @@
 
 import { query } from "infra/database";
 import { NotFoundError, ValidationError } from "infra/errors";
-import { ORDER_STATUSES, isValidOrderStatus, type OrderStatus } from "@/lib/order-status";
+import {
+  ORDER_STATUSES,
+  isValidOrderStatus,
+  isValidTransition,
+  type OrderStatus,
+} from "@/lib/order-status";
 
 // Re-export pra callers existentes do model não precisarem mudar import.
 // Client components devem importar direto de @/lib/order-status pra evitar
@@ -236,11 +241,26 @@ export async function listOrderItems(orderId: string): Promise<OrderItem[]> {
   }));
 }
 
-export async function updateOrderStatus(id: string, status: OrderStatus): Promise<Order> {
-  if (!isValidOrderStatus(status)) {
+// Move status enforçando a matriz de transições. Caller (route) faz o
+// gate de autorização pela feature derivada da transição; aqui validamos
+// só o aspecto de máquina-de-estados: o pedido pode ir do estado atual
+// para o alvo?
+export async function updateOrderStatus(
+  id: string,
+  currentStatus: OrderStatus,
+  nextStatus: OrderStatus,
+): Promise<Order> {
+  if (!isValidOrderStatus(nextStatus)) {
     throw new ValidationError({
       message: "Status inválido.",
       action: `Use um de: ${ORDER_STATUSES.join(", ")}.`,
+    });
+  }
+  if (!isValidTransition(currentStatus, nextStatus)) {
+    throw new ValidationError({
+      cause: new Error(`Invalid transition ${currentStatus} → ${nextStatus}`),
+      message: `Não é possível ir de "${currentStatus}" para "${nextStatus}".`,
+      action: "Veja as transições válidas em lib/order-status.ts.",
     });
   }
   const result = await query<Order>({
@@ -251,7 +271,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus): Promis
       WHERE id = $1
       RETURNING *
     ;`,
-    values: [id, status],
+    values: [id, nextStatus],
   });
   if (!result.rows[0]) {
     throw new NotFoundError({

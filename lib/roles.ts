@@ -28,12 +28,15 @@ const COMPANY_MANAGEMENT_PERMISSIONS = [
   "create:client",
   "update:client",
   "delete:client",
-  // Order CRUD: lifecycle de pedido completo. update:order cobre transição
-  // de status no MVP; PR de lifecycle (issue #12) refina pra
-  // transition:order:to_separado etc se necessário.
+  // Order: CRUD + transições explícitas por role. update:order foi
+  // dividido em 3 features de transição porque cada uma é uma ação
+  // distinta na operação (separar pedido vs entregar vs cancelar) — e
+  // queremos que admin cadastre exatamente quem faz o quê.
   "read:order",
   "create:order",
-  "update:order",
+  "transition:order:separar",
+  "transition:order:entregar",
+  "transition:order:cancelar",
   "delete:order",
 ] as const;
 
@@ -49,14 +52,22 @@ const READ_ONLY_PERMISSIONS = [
   "read:order",
 ] as const;
 
-// Vendedor: cadastra cliente + cria pedido durante atendimento. Não
-// transita status do pedido (essa parte é da operação) e não apaga
-// cadastro (limpeza é do gerente).
-const VENDEDOR_EXTRA = ["create:client", "update:client", "create:order"] as const;
+// Vendedor: cadastra cliente + cria pedido durante atendimento; cancela
+// pedido próprio em caso de engano ou desistência do cliente. Não
+// transita pra separado/entregue (operação) nem apaga cadastro.
+const VENDEDOR_EXTRA = [
+  "create:client",
+  "update:client",
+  "create:order",
+  "transition:order:cancelar",
+] as const;
 
-// Separador + entregador: leem catálogo/clientes e transitam status do
-// pedido (separar / marcar como entregue). Não criam pedido.
-const OPERATIONAL_EXTRA = ["update:order"] as const;
+// Separador: do criado vai pra separado. Não entrega (entregador) nem
+// cancela (vendedor / management).
+const SEPARADOR_EXTRA = ["transition:order:separar"] as const;
+
+// Entregador: do separado vai pra entregue. Idem terminal.
+const ENTREGADOR_EXTRA = ["transition:order:entregar"] as const;
 
 // Two tiers in the same catalog:
 //
@@ -78,8 +89,8 @@ export const ROLE_PERMISSIONS = {
   member: [...READ_ONLY_PERMISSIONS],
   gerente: [...COMPANY_MANAGEMENT_PERMISSIONS],
   vendedor: [...READ_ONLY_PERMISSIONS, ...VENDEDOR_EXTRA],
-  separador: [...READ_ONLY_PERMISSIONS, ...OPERATIONAL_EXTRA],
-  entregador: [...READ_ONLY_PERMISSIONS, ...OPERATIONAL_EXTRA],
+  separador: [...READ_ONLY_PERMISSIONS, ...SEPARADOR_EXTRA],
+  entregador: [...READ_ONLY_PERMISSIONS, ...ENTREGADOR_EXTRA],
 } as const satisfies Record<string, readonly string[]>;
 
 export type Role = keyof typeof ROLE_PERMISSIONS;
@@ -164,7 +175,9 @@ export const ASSIGNABLE_FEATURES: readonly string[] = [
   "delete:client",
   "read:order",
   "create:order",
-  "update:order",
+  "transition:order:separar",
+  "transition:order:entregar",
+  "transition:order:cancelar",
   "delete:order",
 ] as const;
 
@@ -237,7 +250,21 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
     features: [
       { id: "read:order", label: "Ver pedidos" },
       { id: "create:order", label: "Criar pedidos", requires: ["read:order"] },
-      { id: "update:order", label: "Atualizar status do pedido", requires: ["read:order"] },
+      {
+        id: "transition:order:separar",
+        label: "Marcar como separado",
+        requires: ["read:order"],
+      },
+      {
+        id: "transition:order:entregar",
+        label: "Marcar como entregue",
+        requires: ["read:order"],
+      },
+      {
+        id: "transition:order:cancelar",
+        label: "Cancelar pedido",
+        requires: ["read:order"],
+      },
       { id: "delete:order", label: "Excluir pedidos", requires: ["read:order"] },
     ],
   },

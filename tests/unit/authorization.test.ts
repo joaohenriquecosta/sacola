@@ -98,23 +98,33 @@ describe("Role catalog", () => {
     expect([...ROLE_PERMISSIONS.gerente].sort()).toEqual([...ROLE_PERMISSIONS.admin].sort());
   });
 
-  test("separador/entregador extend the baseline with update:order (operacional)", () => {
+  test("separador extends baseline com transition:order:separar (operacional)", () => {
     const member: readonly string[] = ROLE_PERMISSIONS.member;
-    for (const role of ["separador", "entregador"] as const) {
-      const features: readonly string[] = ROLE_PERMISSIONS[role];
-      const extra = features.filter((f) => !member.includes(f)).sort();
-      expect(extra).toEqual(["update:order"]);
-    }
+    const features: readonly string[] = ROLE_PERMISSIONS.separador;
+    const extra = features.filter((f) => !member.includes(f)).sort();
+    expect(extra).toEqual(["transition:order:separar"]);
   });
 
-  test("vendedor extends the baseline with cliente create/update e order create", () => {
-    // Vendedor é front-line: cadastra/atualiza cliente + abre pedido durante
-    // o atendimento. Não recebe delete:client nem update:order (transição
-    // de status é da operação).
+  test("entregador extends baseline com transition:order:entregar (operacional)", () => {
+    const member: readonly string[] = ROLE_PERMISSIONS.member;
+    const features: readonly string[] = ROLE_PERMISSIONS.entregador;
+    const extra = features.filter((f) => !member.includes(f)).sort();
+    expect(extra).toEqual(["transition:order:entregar"]);
+  });
+
+  test("vendedor extends baseline com cliente create/update, order create + cancelar", () => {
+    // Vendedor é front-line: cadastra/atualiza cliente + abre pedido +
+    // cancela próprio pedido. Não transita pra separado/entregue
+    // (operação) nem apaga cadastro (gerente).
     const vendedor: readonly string[] = ROLE_PERMISSIONS.vendedor;
     const member: readonly string[] = ROLE_PERMISSIONS.member;
     const extra = vendedor.filter((f) => !member.includes(f)).sort();
-    expect(extra).toEqual(["create:client", "create:order", "update:client"]);
+    expect(extra).toEqual([
+      "create:client",
+      "create:order",
+      "transition:order:cancelar",
+      "update:client",
+    ]);
   });
 });
 
