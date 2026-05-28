@@ -16,7 +16,9 @@ import { loadCurrentUser } from "infra/controller";
 import { NotFoundError } from "infra/errors";
 import { getMembership } from "models/membership";
 import { getOrderById } from "models/order";
+import { listPaymentsByOrder } from "models/payment";
 import { OrderActions } from "./order-actions";
+import { PaymentsCard } from "./payments-card";
 
 type Params = Promise<{ slug: string; id: string }>;
 
@@ -60,6 +62,12 @@ export default async function PedidoDetailPage({ params }: { params: Params }) {
 
   const transitions = availableTransitions(order.status, membership.features);
   const canDelete = membership.features.includes("delete:order");
+  const canSeePayments = membership.features.includes("read:payment");
+  const canCreatePayment = membership.features.includes("create:payment");
+  const canDeletePayment = membership.features.includes("delete:payment");
+  const payments = canSeePayments ? await listPaymentsByOrder(order.id) : [];
+  const totalPaid = payments.reduce((sum, p) => sum + p.amount_cents, 0);
+  const balanceDue = order.total_cents - totalPaid;
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
@@ -118,6 +126,26 @@ export default async function PedidoDetailPage({ params }: { params: Params }) {
           </div>
         </CardContent>
       </Card>
+
+      {canSeePayments && (
+        <PaymentsCard
+          slug={company.slug}
+          orderId={order.id}
+          orderStatus={order.status}
+          totalCents={order.total_cents}
+          totalPaidCents={totalPaid}
+          balanceDueCents={balanceDue}
+          payments={payments.map((p) => ({
+            id: p.id,
+            amount_cents: p.amount_cents,
+            method: p.method,
+            paid_at: p.paid_at.toISOString(),
+            notes: p.notes,
+          }))}
+          canCreate={canCreatePayment}
+          canDelete={canDeletePayment}
+        />
+      )}
 
       {(transitions.length > 0 || canDelete) && (
         <OrderActions

@@ -79,6 +79,13 @@ export function describeAuditEvent(event: {
     }
     case "stock.movement_deleted":
       return `${actor} estornou um movimento de estoque.`;
+    case "payment.created": {
+      const amount = typeof m.amount_cents === "number" ? (m.amount_cents / 100).toFixed(2) : "?";
+      const method = get(m, "method") ?? "";
+      return `${actor} registrou pagamento de R$ ${amount}${method ? ` em ${method}` : ""}.`;
+    }
+    case "payment.deleted":
+      return `${actor} estornou um pagamento.`;
     default:
       return `${actor} executou ${event.action}.`;
   }
