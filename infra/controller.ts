@@ -106,9 +106,21 @@ export async function loadCurrentUser(): Promise<LoadedContext> {
     return { user: null, session: null };
   }
 
-  const session = await getValidSessionByToken(token);
-  const dbUser = await getUserById(session.user_id);
-  return { user: serializePublicUser(dbUser), session };
+  try {
+    const session = await getValidSessionByToken(token);
+    const dbUser = await getUserById(session.user_id);
+    return { user: serializePublicUser(dbUser), session };
+  } catch (error) {
+    // A present-but-invalid cookie (expired/revoked session, or a token left
+    // over from a wiped DB) means "not logged in" — not a 500. Treat it as
+    // anonymous so Server Components fall through to their logged-out path;
+    // route handlers still clear the stale cookie via errorToResponse, and
+    // logging in overwrites it.
+    if (error instanceof AuthenticationError) {
+      return { user: null, session: null };
+    }
+    throw error;
+  }
 }
 
 export async function canRequest(
