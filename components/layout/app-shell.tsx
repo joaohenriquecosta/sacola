@@ -7,6 +7,7 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
+import { BottomNav } from "./bottom-nav";
 
 type AppShellProps = {
   company: { name: string; slug: string };
@@ -25,7 +26,8 @@ export function AppShell({ company, user, features, children }: AppShellProps) {
             <SidebarTrigger className="-ml-1" />
             <span className="truncate font-medium">{company.name}</span>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">{children}</div>
+          <div className="flex flex-1 flex-col gap-4 p-4 pb-20 md:p-6 md:pb-6">{children}</div>
+          <BottomNav slug={company.slug} features={features} />
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

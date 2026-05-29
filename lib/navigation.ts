@@ -39,6 +39,8 @@ export const NAV_GROUP_LABELS: Record<NavGroup, string> = {
 export type NavItem = {
   key: string;
   label: string;
+  // Shorter label for the cramped mobile bottom nav; falls back to `label`.
+  shortLabel?: string;
   // Path suffix appended to /app/[slug]. "" = company overview (exact match).
   path: string;
   icon: IconSvgElement;
@@ -57,6 +59,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   {
     key: "overview",
     label: "Visão geral",
+    shortLabel: "Início",
     path: "",
     icon: DashboardCircleIcon,
     group: "operacao",
@@ -74,6 +77,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   {
     key: "separation",
     label: "Fila de separação",
+    shortLabel: "Separar",
     path: "/separacao",
     icon: WeightScale01Icon,
     feature: "transition:order:separar",
