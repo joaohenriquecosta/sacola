@@ -1,14 +1,15 @@
-// In-company layout: resolves the company + the caller's membership once,
-// then wraps every nested page in AppShell with a feature-gated sidebar.
-// Pages still do their own lookups (they stay self-contained); this layer
-// guarantees access and supplies the chrome.
+// In-company layout: resolves the company, the caller's membership, and the
+// user's company list once, then wraps every nested page in AppShell with a
+// feature-gated sidebar + company switcher. Pages still do their own lookups
+// (they stay self-contained); this layer guarantees access and supplies the
+// chrome.
 
 import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { loadCurrentUser } from "infra/controller";
 import { NotFoundError } from "infra/errors";
-import { getCompanyBySlug } from "models/company";
+import { getCompanyBySlug, listCompaniesForUser } from "models/company";
 import { getMembership } from "models/membership";
 
 type Params = Promise<{ slug: string }>;
@@ -35,9 +36,12 @@ export default async function CompanyLayout({
   const membership = await getMembership(user.id, company.id);
   if (!membership) notFound();
 
+  const companies = await listCompaniesForUser(user.id);
+
   return (
     <AppShell
       company={{ name: company.name, slug: company.slug }}
+      companies={companies.map((c) => ({ name: c.name, slug: c.slug }))}
       user={{ username: user.username, email: user.email }}
       features={membership.features}
     >

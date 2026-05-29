@@ -3,7 +3,8 @@
 // Renders the sidebar groups from the navigation catalog, filtered by the
 // membership's features. `soon` items (screens not built yet) render disabled
 // with an "em breve" badge instead of a link, so the menu already reserves
-// their place. Active state is derived from the current pathname.
+// their place. Active state comes from the current pathname; tapping a link
+// closes the mobile drawer (setOpenMobile is a no-op on desktop).
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,11 +17,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { isNavItemActive, navForFeatures, navItemHref } from "@/lib/navigation";
 
 export function NavMain({ slug, features }: { slug: string; features: string[] }) {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
   const sections = navForFeatures(features);
 
   return (
@@ -54,7 +57,7 @@ export function NavMain({ slug, features }: { slug: string; features: string[] }
                     isActive={isNavItemActive(item, slug, pathname)}
                     tooltip={item.label}
                   >
-                    <Link href={navItemHref(item, slug)}>
+                    <Link href={navItemHref(item, slug)} onClick={() => setOpenMobile(false)}>
                       <HugeiconsIcon icon={item.icon} />
                       <span>{item.label}</span>
                     </Link>

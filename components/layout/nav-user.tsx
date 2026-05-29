@@ -1,20 +1,16 @@
 "use client";
 
-// Sidebar footer: the user's account menu. This is also where switching
-// companies lives — deliberately tucked away, since an operator rarely
-// belongs to more than one hortifruti. Theme + logout fold in here too, so
-// the in-company shell needs no separate top-bar controls.
+// Sidebar footer: the user's account menu — account, switch company (tucked
+// away, since an operator rarely belongs to more than one hortifruti), and
+// logout. The theme toggle lives in the top bar instead (more discoverable).
+// Navigation items close the mobile drawer on tap.
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowLeftRightIcon,
-  ComputerIcon,
   Logout01Icon,
-  Moon01Icon,
-  Sun01Icon,
   UnfoldMoreIcon,
   UserCircleIcon,
 } from "@hugeicons/core-free-icons";
@@ -38,8 +34,7 @@ import {
 
 export function NavUser({ username, email }: { username: string; email: string }) {
   const router = useRouter();
-  const { isMobile } = useSidebar();
-  const { setTheme } = useTheme();
+  const { isMobile, setOpenMobile } = useSidebar();
   const initial = username.slice(0, 2).toUpperCase();
 
   async function logout() {
@@ -80,31 +75,16 @@ export function NavUser({ username, email }: { username: string; email: string }
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/conta">
+                <Link href="/conta" onClick={() => setOpenMobile(false)}>
                   <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
                   Conta
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/app">
+                <Link href="/app" onClick={() => setOpenMobile(false)}>
                   <HugeiconsIcon icon={ArrowLeftRightIcon} className="size-4" />
                   Trocar de empresa
                 </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setTheme("light")}>
-                <HugeiconsIcon icon={Sun01Icon} className="size-4" />
-                Tema claro
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>
-                <HugeiconsIcon icon={Moon01Icon} className="size-4" />
-                Tema escuro
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("system")}>
-                <HugeiconsIcon icon={ComputerIcon} className="size-4" />
-                Tema do sistema
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
