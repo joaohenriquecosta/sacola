@@ -19,6 +19,7 @@
   "scripts": {
     "dev": "npm run services:up && npm run services:wait:db && npm run migrations:up && next dev",
     "postdev": "npm run services:stop",
+    "dev:seed": "node infra/scripts/dev-seed.js",
     "build": "next build",
     "vercel-build": "infra/scripts/run-prod-migrations.sh && next build",
     "start": "next start",
