@@ -82,7 +82,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: WeightScale01Icon,
     feature: "transition:order:separar",
     group: "operacao",
-    soon: true,
     bottomNav: true,
   },
   {
