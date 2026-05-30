@@ -90,6 +90,25 @@ export async function listPaymentsByOrder(orderId: string): Promise<Payment[]> {
   return result.rows;
 }
 
+// Consolida os pagamentos da empresa pra a tela /pagamentos, já trazendo o
+// cliente de cada pedido (JOIN) pra a UI não fazer N lookups.
+export type PaymentListView = Payment & { client_name: string };
+
+export async function listPaymentsByCompany(companyId: string): Promise<PaymentListView[]> {
+  const result = await query<PaymentListView>({
+    text: `
+      SELECT p.*, c.name AS client_name
+      FROM payments p
+      JOIN orders o ON o.id = p.order_id
+      JOIN clients c ON c.id = o.client_id
+      WHERE p.company_id = $1
+      ORDER BY p.paid_at DESC
+    ;`,
+    values: [companyId],
+  });
+  return result.rows;
+}
+
 // Soma paga em um pedido. Usado pra calcular saldo a pagar
 // (order.total_cents - sumPaidForOrder).
 export async function sumPaidForOrder(orderId: string): Promise<number> {
