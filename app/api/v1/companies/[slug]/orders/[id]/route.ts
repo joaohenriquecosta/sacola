@@ -13,7 +13,13 @@ import { AuthenticationError, NotFoundError, ValidationError } from "infra/error
 import { findTransition } from "@/lib/order-status";
 import { logSafe } from "models/audit-log";
 import { getCompanyBySlug } from "models/company";
-import { deleteOrderById, getOrderById, isValidOrderStatus, updateOrderStatus } from "models/order";
+import {
+  deleteOrderById,
+  getOrderById,
+  isValidOrderStatus,
+  recordSeparationWeights,
+  updateOrderStatus,
+} from "models/order";
 
 type RouteContext = { params: Promise<{ slug: string; id: string }> };
 
@@ -59,6 +65,29 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const existing = await getOrderById(id);
     if (existing.company_id !== company.id) {
       throw new NotFoundError({ message: "Pedido não encontrado." });
+    }
+
+    // Pesagem opcional ao separar: grava o peso real por item antes de
+    // transicionar. Cada peso precisa apontar pra um item do próprio pedido.
+    if (body.status === "separado" && body.weights !== undefined) {
+      if (!Array.isArray(body.weights)) {
+        throw new ValidationError({ message: "weights deve ser uma lista." });
+      }
+      const itemIds = new Set(existing.items.map((i) => i.id));
+      const weights = body.weights.map((w: { item_id?: unknown; gramas?: unknown }) => {
+        if (!w || typeof w.item_id !== "string" || !itemIds.has(w.item_id)) {
+          throw new ValidationError({ message: "Item não pertence ao pedido." });
+        }
+        const gramas = Number(w.gramas);
+        if (!Number.isFinite(gramas) || gramas < 0) {
+          throw new ValidationError({
+            message: "Peso inválido.",
+            action: "Informe o peso em gramas (≥ 0).",
+          });
+        }
+        return { itemId: w.item_id, gramas };
+      });
+      await recordSeparationWeights(id, weights);
     }
 
     // Matrix enforcement: updateOrderStatus lança ValidationError se a
