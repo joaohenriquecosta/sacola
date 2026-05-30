@@ -100,7 +100,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: Money01Icon,
     feature: "read:payment",
     group: "operacao",
-    soon: true,
   },
   {
     key: "products",
