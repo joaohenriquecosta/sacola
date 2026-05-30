@@ -91,7 +91,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: DeliveryTruck01Icon,
     feature: "transition:order:entregar",
     group: "operacao",
-    soon: true,
     bottomNav: true,
   },
   {
