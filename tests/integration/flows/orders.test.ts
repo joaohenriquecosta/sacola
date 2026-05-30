@@ -360,6 +360,62 @@ describe("PATCH /orders/[id] (transition matrix + per-transition features)", () 
     );
     expect(res.status).toBe(400);
   });
+
+  test("Separar com pesos grava gramas_separado nos itens (#19)", async () => {
+    const order = await (
+      await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: vendedorCookie },
+        body: JSON.stringify({
+          client_id: clientId,
+          items: [{ product_id: productId, quantity: 2 }],
+        }),
+      })
+    ).json();
+
+    const res = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders/${order.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: separadorCookie },
+      body: JSON.stringify({
+        status: "separado",
+        weights: [{ item_id: order.items[0].id, gramas: 1950 }],
+      }),
+    });
+    expect(res.status).toBe(200);
+
+    const detail = await (
+      await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders/${order.id}`, {
+        headers: { Cookie: separadorCookie },
+      })
+    ).json();
+    expect(detail.items[0].gramas_separado).toBe(1950);
+  });
+
+  test("Peso apontando pra item de outro pedido → 400 (#19)", async () => {
+    const mk = async () =>
+      (
+        await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Cookie: vendedorCookie },
+          body: JSON.stringify({
+            client_id: clientId,
+            items: [{ product_id: productId, quantity: 1 }],
+          }),
+        })
+      ).json();
+    const a = await mk();
+    const b = await mk();
+
+    const res = await fetch(`${testBaseUrl}/api/v1/companies/${companySlug}/orders/${a.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: separadorCookie },
+      body: JSON.stringify({
+        status: "separado",
+        weights: [{ item_id: b.items[0].id, gramas: 100 }],
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("DELETE /orders/[id]", () => {

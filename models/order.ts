@@ -33,6 +33,9 @@ export type OrderItem = {
   // pra number em listOrderItems pra UI tratar uniforme.
   quantity: number;
   subtotal_cents: number;
+  // Peso real (g) registrado na separação; null até pesar. numeric(10,3),
+  // convertido pra number como quantity.
+  gramas_separado: number | null;
   created_at: Date;
 };
 
@@ -218,6 +221,7 @@ export async function listOrderItems(orderId: string): Promise<OrderItem[]> {
     unit_price_cents: number;
     quantity: string;
     subtotal_cents: number;
+    gramas_separado: string | null;
     created_at: Date;
   }>({
     text: `
@@ -237,6 +241,7 @@ export async function listOrderItems(orderId: string): Promise<OrderItem[]> {
     unit_price_cents: r.unit_price_cents,
     quantity: Number(r.quantity),
     subtotal_cents: r.subtotal_cents,
+    gramas_separado: r.gramas_separado != null ? Number(r.gramas_separado) : null,
     created_at: r.created_at,
   }));
 }
@@ -280,6 +285,25 @@ export async function updateOrderStatus(
     });
   }
   return result.rows[0];
+}
+
+// Registra o peso real (gramas) separado por item. Um UPDATE por item
+// (convenção client-per-query do projeto). Só afeta itens do próprio pedido;
+// a rota valida posse + permissão antes de chamar.
+export async function recordSeparationWeights(
+  orderId: string,
+  weights: readonly { itemId: string; gramas: number }[],
+): Promise<void> {
+  for (const w of weights) {
+    await query({
+      text: `
+        UPDATE order_items
+        SET gramas_separado = $1
+        WHERE id = $2 AND order_id = $3
+      ;`,
+      values: [w.gramas, w.itemId, orderId],
+    });
+  }
 }
 
 export async function deleteOrderById(id: string): Promise<void> {
